@@ -15,7 +15,7 @@ class Subreddit:
 
     def getUrl(self) -> str:
         """Returns the full url of the subreddit"""
-        return 'https://www.reddit.com/r' + self.__name
+        return 'https://www.reddit.com/r/' + self.__name
 
     def getPostsUrl(self, sort: str = 'top') -> str:
         """Returns the url to retrieve recent posts via sort method (defaults to top)"""

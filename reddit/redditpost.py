@@ -28,13 +28,11 @@ class RedditPost:
         """A representation of an error caused by an invalid url input"""
 
     def __init__(self, url: str):
-        """Creates and returns a reddit post object from a url if its valid, otherwise None."""
-        if not url.startswith('https://'):
-            raise RedditPost.MalformedUrlError('the url given (' + url + ') is not a valid url.')
+        """Creates and returns a reddit post object from a url."""
+        url = url.replace('www.reddit.com', '').replace('reddit.com', '').replace('https://','').replace('http://','')
+        parts = url.split('/') # [<>, 'r', name, 'comments', post_id, name, comment_id?]
 
-        parts = url.split('/')[2:] # [domain, 'r', name, 'comments', post_id, name, comment_id?]
-
-        if (parts[0] != 'www.reddit.com' and parts[0] != 'reddit.com') or parts[1] != 'r' or parts[3] != 'comments':
+        if parts[1] != 'r' or parts[3] != 'comments':
             raise RedditPost.MalformedUrlError('the url given (' + url + ') is not a valid reddit post url.')
 
         subreddit_name = parts[2]

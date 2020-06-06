@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     print("latest repostsleuthbot comment info")
     p1 = Redditor('repostsleuthbot').getCommentsUrl() + '.json'
-    r1 = requests.get(p1, headers)
+    r1 = requests.get(p1, headers=headers)
     data = r1.json()
     if 'data' in data:
         latestComment = data['data']['children'][0]
@@ -32,19 +32,22 @@ if __name__ == "__main__":
 
     print("top programmerhumor post info")
     p2 = Subreddit('programmerhumor').getPostsUrl('top') + '.json'
-    r2 = requests.get(p2, headers)
+    r2 = requests.get(p2, headers=headers)
     data = r2.json()
     if 'data' in data:
         topPost = data['data']['children'][0]
-        print(json.dumps(latestComment, indent=4, sort_keys=True))
+        print(json.dumps(topPost, indent=4, sort_keys=True))
     else:
         topPost = {}
         print(data)
 
-    if 'permalink' in topPost:
+    if 'data' in topPost:
         print("top comment from top post")
-        p3 = RedditPost(topPost['permalink']).getUrl() + '.json'
-        r3 = requests.get(p3, headers)
+        p3 = RedditPost(topPost['data']['permalink']).getUrl() + '.json'
+        r3 = requests.get(p3, headers=headers)
         data = r2.json()
-        topComment = data[1]['data']['children'][0]
-        print(json.dumps(topComment, indent=4, sort_keys=True))
+        if 'data' in data:
+            topComment = data['data']['children'][0]
+            print(json.dumps(topComment, indent=4, sort_keys=True))
+        else:
+            print(data)
