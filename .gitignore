@@ -2,6 +2,7 @@
 *.out
 *.pyc
 *.log
+*.swp
 
 #cache files
 .DS_Store
