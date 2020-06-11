@@ -1,34 +1,15 @@
 #!/usr/bin/env python3
 
-try:
-    from subreddit import Subreddit
-except ImportError:
-    from reddit.subreddit import Subreddit
+from subreddit import Subreddit
+from redditobject import RedditObject
 
-class RedditPost:
+class RedditPost(RedditObject):
     """Abstract representation of a single reddit post"""
-
-    class Comment:
-        """Abstract representation of a single reddit comment"""
-        def __init__(self, reddit_post, comment_id: str):
-            self.__post = reddit_post
-            self.__id = comment_id
-
-        def getUrl(self) -> str:
-            """Returns the url for a particular comment"""
-            return self.__post.getUrl() + self.__id
-
-        def getPost(self):
-            return self.__post
-
-        def getText(self) -> str:
-            pass #TODO: Implement comment text retrieval
-
-    class MalformedUrlError(RuntimeError):
-        """A representation of an error caused by an invalid url input"""
 
     def __init__(self, url: str):
         """Creates and returns a reddit post object from a url."""
+        super().__init__()
+
         url = url.replace('www.reddit.com', '').replace('reddit.com', '').replace('https://','').replace('http://','')
         parts = url.split('/') # [<>, 'r', name, 'comments', post_id, name, comment_id?]
 
@@ -60,4 +41,28 @@ class RedditPost:
         return self.getSubreddit().getUrl() + '/comments/' + self.__id + '/' + self.__urlname + '/'
 
     def getComments(self) -> list:
-        pass #TODO: Implement comment list retrieval in the form of [Comment()]
+        pass #TODO: Implement comment list retrieval in the form of [RedditComment()]
+
+
+class RedditComment(RedditObject):
+    """Abstract representation of a single reddit comment"""
+
+    def __init__(self, reddit_post: RedditPost, comment_id: str, comment_text: str = None, score: int = 0):
+        super().__init__()
+        self.__post = reddit_post
+        self.__id = comment_id
+        self.__comment_text = comment_text
+        self.__score = score
+
+    def getUrl(self) -> str:
+        """Returns the url for a particular comment"""
+        return self.__post.getUrl() + self.__id
+
+    def getPost(self) -> RedditPost:
+        return self.__post
+
+    def getText(self) -> str:
+        return self.__comment_text
+
+    def getScore(self) -> int:
+        return self.__score

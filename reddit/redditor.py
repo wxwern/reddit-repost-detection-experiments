@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 
-class Redditor:
+from redditobject import RedditObject
+
+class Redditor(RedditObject):
     """Abstract representation of a single redditor"""
 
     def __init__(self, username: str):
+        super().__init__()
         self.__username = username
 
     def getUsername(self) -> str:
         return self.__username
 
     def getFormattedUsername(self) -> str:
-        """Returns the subreddit prefixed with u/, reddit's standard notation"""
+        """Returns the user prefixed with u/, reddit's standard notation"""
         return 'u/' + self.__username
 
     def getUrl(self) -> str:

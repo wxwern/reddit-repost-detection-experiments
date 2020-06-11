@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
-class Subreddit:
+from redditobject import RedditObject
+
+class Subreddit(RedditObject):
     """Abstract representation of a single subreddit"""
 
     def __init__(self, name: str):
+        super().__init__()
         self.__name = name
 
     def getName(self) -> str:
