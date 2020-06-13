@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
-import json
-import requests
-
-from subreddit import Subreddit
-from redditor import Redditor
-from redditpost import RedditPost, RedditComment
-from redditobject import RedditObject
+try:
+    from subreddit import Subreddit
+    from redditor import Redditor
+    from redditpost import RedditPost, RedditComment
+    from redditobject import RedditObject
+except ImportError:
+    from reddit.subreddit import Subreddit
+    from reddit.redditor import Redditor
+    from reddit.redditpost import RedditPost, RedditComment
+    from reddit.redditobject import RedditObject
 
 if __name__ == "__main__":
     """For testing purposes"""

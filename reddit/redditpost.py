@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 
-from io import BytesIO
+from io import BytesIO, StringIO
 from PIL import Image
-from subreddit import Subreddit
-from redditor import Redditor
-from redditobject import RedditObject
+from markdown import Markdown
+try:
+    from subreddit import Subreddit
+    from redditor import Redditor
+    from redditobject import RedditObject
+except ImportError:
+    from reddit.subreddit import Subreddit
+    from reddit.redditor import Redditor
+    from reddit.redditobject import RedditObject
 
 class RedditPost(RedditObject):
     """Abstract representation of a single reddit post"""
@@ -18,6 +24,8 @@ class RedditPost(RedditObject):
         self.__id = post_id
         self.__slug = post_slug
         self.__post_title = None
+        self.__post_flair_text = None
+        self.__post_crosspost_url = None
         self.__post_image_url = None
         self.__post_image = None
         self.__author = None
@@ -73,8 +81,11 @@ class RedditPost(RedditObject):
         try:
             if postJson['data']['post_hint'] == 'image':
                 self.__post_image_url = postJson['data']['url']
+            if postJson['data']['post_hint'] == 'link' and 'reddit.com' in postJson['data']['url'].split('/')[2]:
+                self.__post_crosspost_url = postJson['data']['url']
         except:
             pass
+        self.postJson = postJson
 
     def retrieve(self):
         """Retrieves the data within this comment and saves it to self"""
@@ -118,9 +129,49 @@ class RedditPost(RedditObject):
             pass
         return None
 
+    def getImageHumanTranscription(self) -> str:
+        """Returns a transcription of the image formatted in markdown by a human from r/transcribersofreddit, if comments are retrieved and one such comment exists, otherwise None."""
+
+        HEADER1 = "Image Transcription"
+        FOOTER1 = "I'm a human volunteer content transcriber"
+        FOOTER2 = "human&#32;volunteer&#32;content&#32;transcriber"
+        def isImageTranscriptionComment(x):
+            t = x.getText().split('\n')
+            return \
+                FOOTER1 in t[-1] or \
+                FOOTER2 in t[-1] or \
+                HEADER1 in t[0]
+
+        #Filter all comments by whether its an image transcription.
+        results = list(filter(isImageTranscriptionComment, self.getComments()))
+
+        #If there're results, retrieve the first relevant comment and process it.
+        if len(results) > 0:
+            text = results[0].getText()
+            splitText = text.split('---')
+
+            #If the comment was already split, simply get the center portion.
+            if len(splitText) == 2:
+                return splitText[1].strip()
+
+            #Otherwise, we do some automated cleanup.
+            textLines = text.split('\n')
+            if HEADER1 in textLines[0]:
+                text = '\n'.join(text.split('\n')[1:])
+            if FOOTER1 in textLines[-1] or FOOTER2 in textLines[-1]:
+                text = '\n'.join(text.split('\n')[:-1])
+            return text.strip()
+
+        #Otherwise, we return nothing.
+        return None
+
     def unloadImage(self):
         """Removes the image from memory if present. It'll be redownloaded if getImage is called again."""
         self.__post_image = None
+
+    def getCrosspostUrl(self):
+        """Returns the url of a reddit crosspost if it has one, otherwise None."""
+        return self.__post_crosspost_url
 
     def getAuthor(self) -> Redditor:
         """Returns the author of the comment. It may be None if not yet retrieved."""
@@ -223,9 +274,16 @@ class RedditComment(RedditObject):
         """Returns the parent post of the comment."""
         return self.__post
 
+    def getMarkdownText(self) -> str:
+        """Returns the markdown contents of the comment. It may be None if not yet retrieved."""
+        return self.__comment_text
+
     def getText(self) -> str:
         """Returns the plain text contents of the comment. It may be None if not yet retrieved."""
-        return self.__comment_text
+        if self.__comment_text:
+            cleaned = unmark(self.__comment_text)
+            return cleaned
+        return None
 
     def getAuthor(self) -> Redditor:
         """Returns the author of the comment. It may be None if not yet retrieved."""
@@ -247,3 +305,33 @@ class RedditComment(RedditObject):
             s += ': ' + t[:15] + ('...' if len(t) > 15 else '')
         s += ']'
         return s
+
+
+
+
+#
+# patching Markdown to handle conversion of Markdown to plaintext.
+# https://stackoverflow.com/a/54923798/6483149
+#
+def unmark_element(element, stream=None):
+    if stream is None:
+        stream = StringIO()
+    if element.text:
+        stream.write(element.text)
+    for sub in element:
+        unmark_element(sub, stream)
+    if element.tail:
+        stream.write(element.tail)
+    return stream.getvalue()
+
+Markdown.output_formats["plain"] = unmark_element
+__md = Markdown(output_format="plain")
+__md.stripTopLevelTags = False
+
+def unmark(text):
+    html_cleaned = text \
+                    .replace('&amp;', '&') \
+                    .replace('&lt;', '<') \
+                    .replace('&gt;', '>') \
+                    .replace('&#32;', ' ')
+    return __md.convert(html_cleaned)

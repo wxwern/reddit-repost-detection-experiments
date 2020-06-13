@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-from redditobject import RedditObject
+try:
+    from redditobject import RedditObject
+except ImportError:
+    from reddit.redditobject import RedditObject
 
 class Subreddit(RedditObject):
     """Abstract representation of a single subreddit"""
@@ -35,17 +38,25 @@ class Subreddit(RedditObject):
 
     def getPostsUrl(self, sort: str = 'top') -> str:
         """Returns the url to retrieve recent posts via sort method (defaults to top)"""
-        if sort not in ['top', 'hot', 'new', 'controversal']:
+        if sort not in ['top', 'hot', 'new', 'controversal', 'rising']:
             print('warning: unsupported post sort method, defaulting to sorting by top')
             sort = 'top'
         return self.getUrl() + '/' + sort + '/'
+
+    def getSearchUrl(self, flair: str, json: bool = False, sort: str = 'top', max_no: int = 100) -> str:
+        jsonExt = '.json' if json else ''
+        u = self.getUrl() + '/search' + jsonExt + '?restrict_sr=on&t=all&limit=' + str(max_no) + '&sort=' + str(sort) + '&q=flair:"' + flair + '"'
+        return u
 
     def _process(self, jsonObject):
         items = jsonObject['data']['children']
         if items:
             if items[0]['kind'] == 't3': #posts
-                for item in items:
+                try:
                     from redditpost import RedditPost
+                except ImportError:
+                    from reddit.redditpost import RedditPost
+                for item in items:
                     self.__posts.add(RedditPost.fromJson(item))
 
     def retrieve(self):
@@ -55,9 +66,13 @@ class Subreddit(RedditObject):
             [self.getPostsUrl() + '.json?limit=100']
         )
 
-    def retrievePosts(self, sort: str = 'top', max_no: int = 100):
-        """Retrieves the posts in this subreddit with custom sorting and saves it to self."""
-        self._retrieve(self.getPostsUrl(sort) + '.json?limit=' + str(max_no))
+    def retrievePosts(self, sort: str = 'top', flair: str = None, max_no: int = 100):
+        """Retrieves the posts in this subreddit with custom sorting or flair filtering and saves it to self."""
+        if flair:
+            u = self.getSearchUrl(json=True, sort=sort, flair=flair, max_no=max_no)
+        else:
+            u = self.getPostsUrl() + '.json?limit=' + str(max_no)
+        self._retrieve(u)
 
     def getPosts(self):
         """Returns the posts retrieved from this subreddit."""
