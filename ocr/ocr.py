@@ -21,18 +21,20 @@ class OCR:
         if original:
             return rawtext
         rawtext = rawtext.replace("-\n", "")
-        nlsplit = rawtext.split("\n")
+        parasplit = rawtext.split("\n\n")
         final = ""
-        for i in nlsplit:
-            edit = i.split(" ")
-            newstring = ""
-            for g in edit:
-                if g != "":
-                    newstring = newstring + g + " "
-            final = final + newstring
+        for para in parasplit:
+            nlsplit = para.strip().split("\n")
+            for i in nlsplit:
+                edit = i.split(" ")
+                newstring = ""
+                for g in edit:
+                    if g != "":
+                        newstring += g + " "
+                final += newstring
+            final = final.strip() + "\n\n"
 
-
-        return final
+        return final.strip()
 
 if __name__ == "main.py":
     ocr = OCR

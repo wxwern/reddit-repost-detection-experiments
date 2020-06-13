@@ -133,8 +133,8 @@ class RedditPost(RedditObject):
         """Returns a transcription of the image formatted in markdown by a human from r/transcribersofreddit, if comments are retrieved and one such comment exists, otherwise None."""
 
         HEADER1 = "Image Transcription"
-        FOOTER1 = "I'm a human volunteer content transcriber"
-        FOOTER2 = "human&#32;volunteer&#32;content&#32;transcriber"
+        FOOTER1 = "volunteer content transcriber"
+        FOOTER2 = "volunteer&#32;content&#32;transcriber"
         def isImageTranscriptionComment(x):
             t = x.getText().split('\n')
             return \
