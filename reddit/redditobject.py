@@ -97,7 +97,7 @@ class RedditObject:
         return self._process(self._retrieveRawResponse(url))
 
     def retrieve(self):
-        """Retrieves the contents of the object from reddit."""
+        """Retrieves the contents of the object from reddit. This method should return self to allow for chaining."""
         raise NotImplementedError()
 
     @classmethod

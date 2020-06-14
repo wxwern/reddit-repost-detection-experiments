@@ -90,6 +90,7 @@ class RedditPost(RedditObject):
     def retrieve(self):
         """Retrieves the data within this comment and saves it to self"""
         self._retrieve(self.getUrl() + '.json')
+        return self
 
 
     #Getters
@@ -259,6 +260,7 @@ class RedditComment(RedditObject):
     def retrieve(self):
         """Retrieves the data within this comment and saves it to self."""
         self._retrieve(self.getUrl() + '.json')
+        return self
 
 
     #Getters

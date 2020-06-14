@@ -65,6 +65,7 @@ class Subreddit(RedditObject):
             [self],
             [self.getPostsUrl() + '.json?limit=100']
         )
+        return self
 
     def retrievePosts(self, sort: str = 'top', flair: str = None, max_no: int = 100):
         """Retrieves the posts in this subreddit with custom sorting or flair filtering and saves it to self."""
@@ -73,6 +74,7 @@ class Subreddit(RedditObject):
         else:
             u = self.getPostsUrl() + '.json?limit=' + str(max_no)
         self._retrieve(u)
+        return self
 
     def getPosts(self):
         """Returns the posts retrieved from this subreddit."""

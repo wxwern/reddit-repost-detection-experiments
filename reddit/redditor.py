@@ -71,6 +71,7 @@ class Redditor(RedditObject):
             [self, self],
             [self.getCommentsUrl() + '.json?limit=100', self.getPostsUrl() + '.json?limit=25']
         )
+        return self
 
     def getComments(self):
         return self.__comments
