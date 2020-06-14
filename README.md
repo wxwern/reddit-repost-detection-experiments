@@ -1,6 +1,7 @@
 # arp-thingy
 # :D
 
+
 ## Installation and usage
 Install the dependencies in this project with:
 ```
@@ -15,3 +16,6 @@ To enter this project's `virtualenv` via the command line, enter:
 ```
 pipenv shell
 ```
+
+## Comments/Complaints
+"What is a meme" is a dumb pic and tesseract is dumb also

@@ -29,6 +29,3 @@ class OCR:
 
     
     pass
-
-ocr = OCR
-print(ocr.read("potato.jpg"))

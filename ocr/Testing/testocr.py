@@ -26,6 +26,12 @@ class TestOCR:
         
         return final
 
+    def data(meme):
+        '''return data'''
+        return pytesseract.image_to_data(meme)
+
+    def box(meme):
+        return pytesseract.image_to_boxes(meme)
     
     pass
 
@@ -46,4 +52,13 @@ def testImage(name):
     print(ocr.read(grayscale, False))
     
     
+def testData(name):
+    ocr = TestOCR
+    image = Image.open(name)
+    print("---------------------DATA---------------------")
+    print(ocr.data(image))
+    print("-------------------DATA END-------------------\n\n")
+    print("---------------------BOXES--------------------")
+    print(ocr.box(image))
+    print("--------------------BOX END-------------------")
     
