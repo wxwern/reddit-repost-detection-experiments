@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-from redditobject import RedditObject
+try:
+    from redditobject import RedditObject
+except ImportError:
+    from reddit.redditobject import RedditObject
 
 class Redditor(RedditObject):
     """Abstract representation of a single redditor"""
@@ -46,19 +49,24 @@ class Redditor(RedditObject):
         items = jsonObject['data']['children']
         if items:
             if items[0]['kind'] == 't1': #comments
+                try:
+                    from redditpost import RedditComment
+                except ImportError:
+                    from reddit.redditpost import RedditComment
                 self.__comments = []
                 for item in items:
-                    from redditpost import RedditComment
                     self.__comments.append(RedditComment.fromJson(item))
             elif items[0]['kind'] == 't3': #posts
+                try:
+                    from redditpost import RedditPost
+                except ImportError:
+                    from reddit.redditpost import RedditPost
                 self.__posts = []
                 for item in items:
-                    from redditpost import RedditPost
                     self.__posts.append(RedditPost.fromJson(item))
 
     def retrieve(self):
         """Retrieves comments by this redditor and saves it to self."""
-        #TODO: Implement post retrieval as well
         self.__class__._retrieveList(
             [self, self],
             [self.getCommentsUrl() + '.json?limit=100', self.getPostsUrl() + '.json?limit=25']

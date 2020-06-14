@@ -45,6 +45,7 @@ class RedditObject:
 
     def _retrieveRawResponse(self, url: str):
         """Retrieves the raw response provided by reddit with the given url via a standard request."""
+        print(url)
         try:
             res = self.__class__.retrieveRawData(url)
             res = res.json()

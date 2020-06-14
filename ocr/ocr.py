@@ -8,24 +8,34 @@ class OCR:
     def __init__(self):
         pass
 
-    def read(meme):
-        '''pytesseract reads unedited image.
-        returned string has no newlines and has one space between all words.
-        dashes followed by newlines are removed and the word is merged properly.'''
-        rawtext = pytesseract.image_to_string(meme)
-        rawtext = rawtext.replace("-\n", "")
-        nlsplit = rawtext.split("\n")
-        final = ""
-        for i in nlsplit:
-            edit = i.split(" ")
-            newstring = ""
-            for g in edit:
-                if g != "":
-                    newstring = newstring + g + " "
-            final = final + newstring
-            
-        
-        return final
+    @staticmethod
+    def read(meme, original: bool = False):
+        '''Reads the image directly using pytesseract, unedited, and returns the text result.
 
-    
-    pass
+        By default, returned string has no newlines and has one space between all words.
+        Dashes followed by newlines are removed and the word is merged properly.
+
+        To get the raw output, set the original parameter to True.
+        '''
+        rawtext = pytesseract.image_to_string(meme)
+        if original:
+            return rawtext
+        rawtext = rawtext.replace("-\n", "")
+        parasplit = rawtext.split("\n\n")
+        final = ""
+        for para in parasplit:
+            nlsplit = para.strip().split("\n")
+            for i in nlsplit:
+                edit = i.split(" ")
+                newstring = ""
+                for g in edit:
+                    if g != "":
+                        newstring += g + " "
+                final += newstring
+            final = final.strip() + "\n\n"
+
+        return final.strip()
+
+if __name__ == "main.py":
+    ocr = OCR
+    print(ocr.read("potato.jpg"))
