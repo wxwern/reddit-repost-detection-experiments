@@ -41,11 +41,11 @@ class RedditObject:
         time.sleep(time_delay)
 
         #send the request with teh relevant headers
+        print(url)
         return requests.get(url, headers=cls.headers)
 
     def _retrieveRawResponse(self, url: str):
         """Retrieves the raw response provided by reddit with the given url via a standard request."""
-        print(url)
         try:
             res = self.__class__.retrieveRawData(url)
             res = res.json()

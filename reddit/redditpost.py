@@ -31,6 +31,7 @@ class RedditPost(RedditObject):
         self.__author = None
         self.__score = None
         self.__comments = []
+        self.__cached_json_obj = None
 
     __posts_dict = {}
     @classmethod
@@ -75,17 +76,27 @@ class RedditPost(RedditObject):
             self.__comments = []
             for commentJson in jsonObject[1]['data']['children']:
                 self.__comments.append(RedditComment.fromJson(commentJson))
-        except:
+        except (IndexError, KeyError):
             pass
 
-        try:
-            if postJson['data']['post_hint'] == 'image':
-                self.__post_image_url = postJson['data']['url']
-            if postJson['data']['post_hint'] == 'link' and 'reddit.com' in postJson['data']['url'].split('/')[2]:
-                self.__post_crosspost_url = postJson['data']['url']
-        except:
-            pass
-        self.postJson = postJson
+        if 'url' in postJson['data']:
+            if 'post_hint' in postJson['data']:
+                #We have a reddit provided hint on what the link is.
+                hint = postJson['data']['post_hint']
+                if hint == 'image':
+                    self.__post_image_url = postJson['data']['url']
+                if hint == 'link' and 'reddit.com' in postJson['data']['url'].split('/')[2]:
+                    self.__post_crosspost_url = postJson['data']['url']
+            else:
+                #No hint, likely an old reddit post. Inferring the url type.
+                ext = postJson['data']['url'].split('/')[-1].split('.')[-1].lower()
+                if ext in ['jpg', 'jpeg', 'png', 'gif']:
+                    self.__post_image_url = postJson['data']['url']
+
+                elif 'reddit.com' in postJson['data']['url'].split('/')[2]:
+                    self.__post_crosspost_url = postJson['data']['url']
+
+        self.__cached_json_obj = jsonObject
 
     def retrieve(self):
         """Retrieves the data within this comment and saves it to self"""
@@ -215,6 +226,7 @@ class RedditComment(RedditObject):
         self.__author = None
         self.__comment_text = None
         self.__score = None
+        self.__cached_json_obj = None
 
     __comments_dict = {}
     @classmethod
@@ -256,6 +268,7 @@ class RedditComment(RedditObject):
         self.__author = Redditor.get(jsonObject['data']['author'])
         self.__comment_text = jsonObject['data']['body']
         self.__score = jsonObject['data']['score']
+        self.__cached_json_obj = jsonObject
 
     def retrieve(self):
         """Retrieves the data within this comment and saves it to self."""
