@@ -36,6 +36,16 @@ class OCR:
 
         return final.strip()
 
+    @staticmethod
+    def formattedPytesseractImageData(data):
+        """Reformats pytesseract.image_to_data dict output into a more reasonable form, i.e. data[idx][param] rather than the weird data[param][idx] format"""
+        output = [None] * len(data['text'])
+        for key, value in data.items():
+            for i, e in enumerate(value):
+                if output[i] is None:
+                    output[i] = {}
+                output[i][key] = e
+        return output
+
 if __name__ == "main.py":
-    ocr = OCR
-    print(ocr.read("potato.jpg"))
+    pass
