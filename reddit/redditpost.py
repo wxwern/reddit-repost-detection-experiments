@@ -130,14 +130,14 @@ class RedditPost(RedditObject):
 
     def getImage(self) -> Image:
         """Returns the image as a PIL Image object, if available, and synchronously from the web if necessary, otherwise None"""
-        try :
+        try:
             if not self.__post_image and self.getImageUrl():
                 data = self.__class__.retrieveRawData(self.getImageUrl())
                 self.__post_image = Image.open(BytesIO(data.content))
 
             if self.__post_image:
                 return self.__post_image
-        except:
+        except RuntimeError:
             pass
         return None
 
@@ -163,7 +163,7 @@ class RedditPost(RedditObject):
             splitText = text.split('---')
 
             #If the comment was already split, simply get the center portion.
-            if len(splitText) == 2:
+            if len(splitText) == 3:
                 return splitText[1].strip()
 
             #Otherwise, we do some automated cleanup.

@@ -16,10 +16,10 @@ class RedditObject:
     def __init__(self):
         self.headers = self.__class__.headers
 
-    class MalformedUrlError(Exception):
+    class MalformedUrlError(RuntimeError):
         """A representation of an error caused by an invalid url input"""
 
-    class InvalidResponseError(Exception):
+    class InvalidResponseError(RuntimeError):
         """A representation of an error caused by an invalid response from reddit"""
         def __init__(self, message: str, code: int):
             super().__init__(message)

@@ -15,6 +15,7 @@ class Subreddit(RedditObject):
         super().__init__()
         self.__name = name
         self.__posts = set()
+        self.__posts_next = None
 
     __subreddit_dict = {}
     @classmethod
@@ -50,6 +51,8 @@ class Subreddit(RedditObject):
 
     def _process(self, jsonObject):
         items = jsonObject['data']['children']
+        if jsonObject['data']['after']:
+            self.__posts_next = jsonObject['data']['after']
         if items:
             if items[0]['kind'] == 't3': #posts
                 try:
@@ -61,20 +64,23 @@ class Subreddit(RedditObject):
 
     def retrieve(self):
         """Retrieves the posts in this subreddit and saves it to self."""
-        self.__class__._retrieveList(
-            [self],
-            [self.getPostsUrl() + '.json?limit=100']
-        )
-        return self
+        return self.retrievePosts()
 
-    def retrievePosts(self, sort: str = 'top', flair: str = None, max_no: int = 100):
-        """Retrieves the posts in this subreddit with custom sorting or flair filtering and saves it to self."""
+    def retrievePosts(self, sort: str = 'top', flair: str = None, max_no: int = 100, use_next: bool = False):
+        """Retrieves the posts in this subreddit with custom sorting or flair filtering and saves it to self. Setting use_next to True allows to retrieve new posts for pagination."""
         if flair:
             u = self.getSearchUrl(json=True, sort=sort, flair=flair, max_no=max_no)
         else:
             u = self.getPostsUrl() + '.json?limit=' + str(max_no)
+        if use_next and self.__posts_next:
+            u += "&after=" + self.__posts_next
+            self.__posts_next = None
         self._retrieve(u)
         return self
+
+    def hasSubsequentPages(self):
+        """Checks if the previously retrieved result has a pointer to retrieve subsequent 'pages' of list of posts as per the reddit api"""
+        return self.__posts_next is not None
 
     def getPosts(self):
         """Returns the posts retrieved from this subreddit."""
