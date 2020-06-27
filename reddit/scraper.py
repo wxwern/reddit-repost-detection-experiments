@@ -21,23 +21,24 @@ if __name__ == "__main__":
     s = Subreddit.get('memes')
     print('retrieving subreddit posts')
     s.retrievePosts()
-    while len(s.getPosts()) < 100 and s.hasSubsequentPages():
+    while len(s.getPosts()) < 1000 and s.hasSubsequentPages():
         print('retrieving additional posts...')
-        s.retrievePosts(max_no=5, use_next=True)
+        s.retrievePosts(use_next=True)
 
     posts = s.getPosts()
     try:
         for i, p in enumerate(posts):
             print('downloading image from post %d of %d' % (i + 1, len(posts)))
-            ext = p.getImageUrl().split('/')[-1].split('.')[-1]
-            path = create_filepath(s.getName() + '_' + p.getId() + '.' + ext)
-            if not os.path.exists(path):
-                img = p.getImage()
-                if img:
-                    img.save(path)
-                    print('saved image')
-                p.unloadImage()
-            else:
-                print('image already downloaded')
+            if p.getImageUrl():
+                ext = p.getImageUrl().split('/')[-1].split('.')[-1]
+                path = create_filepath(s.getName() + '_' + p.getId() + '.' + ext)
+                if not os.path.exists(path):
+                    img = p.getImage()
+                    if img:
+                        img.save(path)
+                        print('saved image')
+                    p.unloadImage()
+                else:
+                    print('image already downloaded')
     except KeyboardInterrupt:
         pass
