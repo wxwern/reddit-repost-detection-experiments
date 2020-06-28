@@ -4,6 +4,7 @@
 *.log
 *.swp
 
-#cache files
+scraper_cache/
+
 .DS_Store
 desktop.ini
