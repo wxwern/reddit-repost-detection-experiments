@@ -2,6 +2,7 @@
 
 from PIL import Image
 import pytesseract
+import json
 
 class OCR:
 
@@ -45,7 +46,15 @@ class OCR:
                 if output[i] is None:
                     output[i] = {}
                 output[i][key] = e
-        return output
+        reference = list(filter(lambda x: x['text'].strip() != '', output))
+        paralist = []
+        for i in reference:
+            if paralist == []:
+                paralist.append(i)
+            
+                
+        
 
 if __name__ == "__main__":
     pass
+
