@@ -10,6 +10,7 @@ pytesseract = "*"
 pillow = "*"
 requests = "*"
 markdown = "*"
+imagehash = "*"
 
 [requires]
 python_version = "3.8"
