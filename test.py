@@ -5,6 +5,7 @@ from reddit import Subreddit, RedditPost
 from ocr import OCR
 
 def test_random_memes_post():
+    print("this test script is for testing reddit object functionalities and ocr")
     print("|| loading hot posts in r/memes")
     s1 = Subreddit.get('memes')
     s1.retrievePosts(sort='hot')
