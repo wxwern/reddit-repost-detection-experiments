@@ -31,7 +31,7 @@ def generate_bad_repost(img: Image):
      new_size[1] - random.randint(3,10))
 
 
-    new_img = img.resize(new_size, Image.NEAREST) \
+    new_img = img.resize(new_size, Image.ANTIALIAS) \
                  .rotate(rotate_angle).crop(crop_box)
 
     return new_img
