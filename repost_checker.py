@@ -55,7 +55,7 @@ class RepostChecker:
     def saveProcessedDataToCache(self):
         if self.update_cache:
             output = {'image_to_hash': self.__imageToHash, 'image_to_text': self.__imageToText}
-            with open(self.__cache_json_path, 'w', encoding='utf8') as f:
+            with open(self.__cache_json_path, 'w', encoding='utf-8') as f:
                 json.dump(output, f, indent=4, ensure_ascii=False)
 
 
