@@ -338,8 +338,10 @@ class RepostChecker:
             self.update_cache = c
             self.saveProcessedDataToCache()
 
-        precision = round(vC['TP']/(vC['TP'] + vC['FP']),3)
-        recall    = round(vC['TP']/(vC['TP'] + vC['FN']),3)
+        precision = round(vC['TP']/(vC['TP'] + vC['FP']),5)
+        recall    = round(vC['TP']/(vC['TP'] + vC['FN']),5)
+        accuracy  = round((vC['TP'] + vC['TN'])/(vC['TP'] + vC['TN'] + vC['FP'] + vC['FN']),5)
+        f1_score  = round(2*vC['TP']/(2*vC['TP'] + vC['FP'] + vC['FN']), 5)
 
         if v:
             print()
@@ -347,15 +349,58 @@ class RepostChecker:
                 print('-- results (sample count) --')
             else:
                 print('-- results --')
-            print('precision : %4.1f%%' % (precision*100))
-            print('recall    : %4.1f%%' % (recall*100))
+            print('precision : %4.3f%%' % (precision*100))
+            print('recall    : %4.3f%%' % (recall*100))
+            print('accuracy  : %4.3f%%' % (accuracy*100))
+            print('f1_score  : %4.3f%%' % (f1_score*100))
             print('stats     : %s' % str(vC))
             print()
 
-        vC['precision'] = round(precision, 3)
-        vC['recall'] = round(recall,3)
+        vC['precision'] = round(precision, 8)
+        vC['recall']    = round(recall, 8)
+        vC['accuracy']  = round(accuracy, 8)
+        vC['f1_score']  = round(f1_score, 8)
 
         return vC
+
+    def computeDetectionRateGraph(self, seed:int=69, sample_count:int=None, save_to_file:str=None):
+        data = []
+
+        self.vPrint('')
+        v = self.verbose
+        self.verbose = False
+        c = self.update_cache
+        self.update_cache = False
+
+        for i in range(0, 20+1, 2):
+            for t in range(0, 10+1, 1):
+                if v:
+                    print('(%d/%d) processing img_diff_min %d text_sim_min %.2f' % (i+t, 121, i, t/10))
+                res = self.findDetectionRate(sample_count=sample_count,
+                                             seed=seed,
+                                             img_diff_min=i,
+                                             text_sim_min=t/10)
+
+                d = {'img_diff_min': i, 'text_sim_min': t/10, 'results': res}
+                if v:
+                    print(json.dumps(d, indent=4))
+                data.append(d)
+
+        self.verbose = v
+        self.update_cache = True
+
+        output = {'sample_count': sample_count, 'data': data}
+
+        if save_to_file:
+            if v:
+                print('saving to file...')
+            with open(str(save_to_file), 'w') as f:
+                json.dump(output, f, indent=4)
+
+        if v:
+            print('done!')
+
+        return output
 
 if __name__ == '__main__':
     repostChecker = RepostChecker('scraper_cache')
