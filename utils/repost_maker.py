@@ -17,7 +17,7 @@ def generate_bad_repost(img: Image):
 
     x,y = list(img.size)
     downscale_factor = random.uniform(0.2, 0.4)
-    downscale_factor = min(max(x*downscale_factor, 250), 500)/x
+    downscale_factor = min(max(x*downscale_factor, 250), 350)/x
     x *= downscale_factor * random.uniform(0.9, 1.1)
     y *= downscale_factor * random.uniform(0.9, 1.1)
     new_size = (int(x), int(y))
