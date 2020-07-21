@@ -195,17 +195,17 @@ class RepostChecker:
             if not standardFormat:
                 validity = '??'
             elif is_repost:
-                if a in (target_check, bad_check):
+                if a.replace('_REPOST_', '') == (target_check):
                     validity = 'TP'
                 else:
                     validity = 'FP'
             else:
-                if a in (target_check, bad_check):
+                if a.replace('_REPOST_', '') == (target_check):
                     validity = 'FN'
                 else:
                     validity = 'TN'
 
-            if self.verbose and standardFormat:
+            if self.verbose:
                 self.vPrint('%8s   %8d   %8.3f    %-50s' % \
                             (('YES, ' if is_repost else ' NO, ') + validity,b,c,a))
                 if standardFormat:
@@ -216,11 +216,11 @@ class RepostChecker:
                     self.vPrint('reddit.com/r/' + subreddit + '/comments/' + post_id + '/')
                     if a == target_check:
                         self.vPrint('• this is the originally chosen image')
-                    if a == bad_check:
-                        self.vPrint('• this is a known repost based upon the chosen image')
+                    if a == bad_check or a == target_check.replace('_REPOST_',''):
+                        self.vPrint('• this is a known to be the same as the chosen image')
                     self.vPrint()
                 else:
-                    self.vPrint('• this image isn\'t rom the standard dataset')
+                    self.vPrint('• this image isn\'t from the standard dataset\n')
 
             results[a] = {
                 'imgName': a,
