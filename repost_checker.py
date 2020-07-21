@@ -43,7 +43,7 @@ class RepostChecker:
     def readProcessedDataFromCache(self):
         try:
             if self.use_cache:
-                with open(self.__cache_json_path) as json_data:
+                with open(self.__cache_json_path, 'r', encoding='utf-8') as json_data:
                     x = json.load(json_data)
                     if 'image_to_hash' in x:
                         self.__imageToHash = x['image_to_hash']
