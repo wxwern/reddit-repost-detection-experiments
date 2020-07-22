@@ -8,7 +8,10 @@ from os.path import isfile, join
 from PIL import Image, UnidentifiedImageError
 from ocr import OCR
 from hasher import Hasher
-from utils import generate_bad_repost
+try:
+    from repost_maker import generate_bad_repost
+except ImportError:
+    from .repost_maker import generate_bad_repost
 
 class RepostChecker:
     '''
@@ -114,7 +117,13 @@ class RepostChecker:
         return (d,t)
 
 
-    def checkRepostDetection(self, img: str, img_diff_min: int = 15, text_sim_min: float = 0.7, recheck_img: bool = True, generate_repost: bool = False, save_generated_repost: bool = True):
+    def checkRepostDetection(self,
+                             img: str,
+                             img_diff_min: int = 15,
+                             text_sim_min: float = 0.7,
+                             recheck_img: bool = True,
+                             generate_repost: bool = False,
+                             save_generated_repost: bool = True):
         '''
         Checks whether reposts can be detected correctly using
         a naive algorithm considering image hashes and ocr text.
@@ -134,10 +143,11 @@ class RepostChecker:
 
         target_check = img
         target_path = join(self.img_dir, target_check)
+        target_img = None
         self.vPrint('we\'ll process post : ' + target_check)
         if generate_repost or recheck_img:
             target_img = Image.open(target_path)
-        if recheck_img or target_check not in d or target_check not in t:
+        if target_img and (recheck_img or target_check not in d or target_check not in t):
             self.vPrint('computing target metadata')
             target_hash = Hasher.hashImage(target_img, self.__imagehash_method)
             target_text = OCR.read2(target_img)
@@ -294,15 +304,33 @@ class RepostChecker:
         finally:
             self.saveProcessedDataToCache()
 
-
-    def findDetectionRate(self, imgs: list = [], sample_count: int = None, seed: int = None, img_diff_min: int = 15, text_sim_min: float = 0.7):
-        '''finds the repost detection rate (precision, recall, true/false positives/negatives)'''
-
-        vC = {'TP':0,'FP':0,'TN':0,'FN':0,'??':0}
-        names = imgs if imgs else list(self.__imageToHash.keys())
+    def getImagesSample(self,
+                        imgs_list: list = None,
+                        sample_count: int = None,
+                        seed: int = None):
+        '''
+        Returns a subsample of sample_count images using the seed (if given) from the list (or the list of images loaded in this class if not provided)
+        '''
+        names = imgs_list if imgs_list else list(self.__imageToHash.keys())
         if seed:
             random.seed(seed)
-        random.shuffle(names)
+        total = min(len(names), sample_count) if sample_count else len(names)
+        names = random.sample(names, total)
+        return names
+
+
+    def findDetectionRate(self,
+                          imgs_list: list = None,
+                          sample_count: int = None,
+                          seed: int = 69,
+                          img_diff_min: int = 15,
+                          text_sim_min: float = 0.7):
+        '''finds the repost detection rate (precision, recall, true/false positives/negatives) given the parameters'''
+
+        vC = {'TP':0,'FP':0,'TN':0,'FN':0,'??':0}
+        names = self.getImagesSample(imgs_list=imgs_list,
+                                     sample_count=sample_count,
+                                     seed=seed)
 
         interrupted = False
         v = self.verbose
@@ -311,7 +339,6 @@ class RepostChecker:
         self.update_cache = False
 
         try:
-            total = min(len(names), sample_count) if sample_count else len(names)
             for i, img in enumerate(names):
                 if sample_count and i >= sample_count:
                     break
@@ -326,7 +353,7 @@ class RepostChecker:
                         precision = 0
                         recall    = 0
                     print('\n[%5d/%-5d] %s' % \
-                          (i+1, total, img))
+                          (i+1, len(names), img))
                     print('  ~> (precision: %5.1f%%, recall: %5.1f%%) %s' % \
                           (precision, recall, str(vC)))
         except KeyboardInterrupt:
@@ -363,7 +390,12 @@ class RepostChecker:
 
         return vC
 
-    def computeDetectionRateGraph(self, seed:int=69, sample_count:int=None, save_to_file:str=None):
+    def findDetectionRateForThresholdRange(self,
+                                           seed:int=69,
+                                           sample_count:int=None,
+                                           img_diff_range=(x for x in range(0, 21, 2)),
+                                           text_sim_range=(x/10 for x in range(0, 10)),
+                                           save_to_file:str=None):
         data = []
 
         self.vPrint('')
@@ -372,28 +404,31 @@ class RepostChecker:
         c = self.update_cache
         self.update_cache = False
 
-        for i in range(0, 20+1, 2):
-            for t in range(0, 10+1, 1):
+        for i in img_diff_range:
+            for t in text_sim_range:
                 if v:
-                    print('(%d/%d) processing img_diff_min %d text_sim_min %.2f' % (i+t, 121, i, t/10))
+                    print('processing img_diff_min %d text_sim_min %.2f' % \
+                          (i, t))
                 res = self.findDetectionRate(sample_count=sample_count,
                                              seed=seed,
                                              img_diff_min=i,
-                                             text_sim_min=t/10)
+                                             text_sim_min=t)
 
-                d = {'img_diff_min': i, 'text_sim_min': t/10, 'results': res}
+                d = {'img_diff_min': i, 'text_sim_min': t, 'results': res}
                 if v:
+                    print('completed img_diff_min %d text_sim_min %.2f' % \
+                          (i, t))
                     print(json.dumps(d, indent=4))
                 data.append(d)
 
         self.verbose = v
-        self.update_cache = True
+        self.update_cache = c
 
         output = {'sample_count': sample_count, 'data': data}
 
         if save_to_file:
             if v:
-                print('saving to file...')
+                print('saving to file (%s)...' % save_to_file)
             with open(str(save_to_file), 'w') as f:
                 json.dump(output, f, indent=4)
 
@@ -401,49 +436,3 @@ class RepostChecker:
             print('done!')
 
         return output
-
-if __name__ == '__main__':
-    repostChecker = RepostChecker('scraper_cache')
-    print('this test script is for testing simple repost detection via image hashing and ocr capabilities')
-    print('processing images in scraper_cache...')
-    repostChecker.processData()
-    print('done!')
-    print('would you like to check repost detection for individual images now? [y/N]')
-    if input().lower().startswith('y'):
-        while True:
-            try:
-                print('type an image name in scraper_cache! (ctrl-c to exit)')
-                imgName = input()
-                print('generate a repost with prefix _REPOST_? [y/N]')
-                shdRepost = input().lower().startswith('y')
-                _ = repostChecker.checkRepostDetection(imgName, generate_repost=shdRepost)
-            except KeyboardInterrupt:
-                break
-            except:
-                print('something was wrong.')
-                continue
-
-    print()
-    print('-'*30)
-    print('''
-if you\'re in an interactive shell,
-try the following examples:
-
-    # get other image names flagged as reposts of the given image name
-    res = repostChecker.listRepostsOf(imageName)
-
-    # get detailed detection results of this particular image against all images
-    res = repostChecker.checkRepostDetection(imageName[, options])
-
-    # finds detection rate w/ all images against all images
-    res = repostChecker.findDetectionRate()
-
-    # find detection rate w/ 100 random images against all images
-    res = repostChecker.findDetectionRate(sample_count=100)
-
-    # find detection rate w/ 100 random images against all images,
-    # using seed 69 (so we can repeat using the same 100 random images later),
-    # given positive result refers to image difference of 15 or less,
-    # and text similarity of 60% or higher
-    res = repostChecker.findDetectionRate(sample_count=100, seed=69, img_diff_min=15, text_sim_min=0.6)
-''')
