@@ -21,9 +21,9 @@ To scrape meme images from reddit, use:
 pipenv run python3 reddit/scraper.py
 ```
 
-To use the repost checker on the scraped contents, run:
+To use the repost checker and other related tools on the scraped contents, run:
 ```
-pipenv run python3 -i repost_checker.py
+pipenv run python3 -i repost_tools.py
 ```
 
 ## Comments/Complaints
