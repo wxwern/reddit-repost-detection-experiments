@@ -74,6 +74,7 @@ def findDetectionRate(imgs_list: list = None,
         vC['TN'] += r['TN']
         vC['FP'] += r['FP']
         vC['FN'] += r['FN']
+        vC['??'] += r['??']
 
     precision = round(vC['TP']/(vC['TP'] + vC['FP']),5)
     recall    = round(vC['TP']/(vC['TP'] + vC['FN']),5)

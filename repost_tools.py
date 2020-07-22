@@ -55,8 +55,8 @@ try the following examples:
     # via a range of image difference and text similarity thresholds
     res = repostChecker.findDetectionRateForThresholdRange(sample_count=100,
                                                            seed=69,
-                                                           img_diff_min=range(0,20+1),
-                                                           text_sim_min=(x/10 for x in range(0,10+1),
+                                                           img_diff_range=range(0,20+1),
+                                                           text_sim_range=(x/10 for x in range(0,10+1),
                                                            save_to_file=filename)
 
 for detection rate computations, you may replace the commands with "poolRepostChecker",
