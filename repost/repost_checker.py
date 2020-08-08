@@ -292,18 +292,30 @@ class RepostChecker:
 
                 if i % 10 == 0:
                     self.vPrint('partial: %5d/%d' % (i,len(names)))
-                target_path = join(self.img_dir, name)
-                bad_imgs = generate_bad_repost(target_path, count=(count_per_post), save_loc=join(self.img_dir, repname))
-                for newrepname, bad_img in bad_imgs:
-                    bad_img_hash = Hasher.hashImage(bad_img, self.__imagehash_method)
-                    bad_img_text = OCR.read2(bad_img)
-                    self.__imageToHash[newrepname] = bad_img_hash
-                    self.__imageToText[newrepname] = bad_img_text
+
+                try:
+                    target_path = join(self.img_dir, name)
+                    bad_imgs = generate_bad_repost(target_path, count=(count_per_post), save_loc=join(self.img_dir, repname))
+                    for newrepname, bad_img in bad_imgs:
+                        bad_img_hash = Hasher.hashImage(bad_img, self.__imagehash_method)
+                        bad_img_text = OCR.read2(bad_img)
+                        self.__imageToHash[newrepname] = bad_img_hash
+                        self.__imageToText[newrepname] = bad_img_text
+                except FileNotFoundError as e:
+                    print(e)
+                    print("skipped an image that doesn't exist")
+                    continue
+                except UnidentifiedImageError as e:
+                    print(e)
+                    print('skipped an unidentified image')
+                    continue
+
             self.vPrint('done!')
         except KeyboardInterrupt:
-            self.vPrint('interrupted')
+            self.vPrint('interrupted!')
         finally:
             self.saveProcessedDataToCache()
+            self.vPrint('saved!')
 
     def getImagesSample(self,
                         imgs_list: list = None,
