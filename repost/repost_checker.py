@@ -88,7 +88,7 @@ class RepostChecker:
 
         self.vPrint("loading... " + str(len(files)) + ' items')
         for i, file in enumerate(files):
-            if i % 100 == 0:
+            if i % (len(files)//20) == 0:
                 self.vPrint('partial: %5d/%d' % (i,len(files)))
 
             try:
@@ -185,11 +185,11 @@ class RepostChecker:
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
             text_sim = SequenceMatcher(None, t[key] if key in t else '', target_text).ratio()
             distances.append \
-            ( \
-                (key, \
-                 img_diff, \
-                 text_sim)
-            )
+                ( \
+                 (key, \
+                  img_diff, \
+                  text_sim)
+                 )
             name_dist_dict[key] = (distances[-1][1], distances[-1][2])
 
 
@@ -212,29 +212,24 @@ class RepostChecker:
         self.vPrint('--- similar results ---')
         self.vPrint('  SAME?  | IMG_DIFF | TEXT_SIM | IMAGE')
         for a,b,c in distances:
-            standardFormat = len(a.split('.')) == 2 and len(a.split('.')[0].replace('_REPOST_', '').split('_')) == 2
-            is_known_same = a.replace('_REPOST_','') == target_check.replace('_REPOST_', '')
+            standardFormat = len(a.split('.')) == 2 and len(a.split('.')[0].split('_REPOST_')[-1].split('_')) == 2
+            is_known_same = a.split('_REPOST_')[-1] == target_check.split('_REPOST_')[-1]
             is_repost = b <= img_diff_min and c >= text_sim_min
             if not standardFormat:
                 validity = '??'
+            else:
                 if is_known_same:
                     if is_repost:
                         validity = 'TP'
                     else:
                         validity = 'FN'
                         FN += 1
-            elif is_repost:
-                if is_known_same:
-                    validity = 'TP'
                 else:
-                    validity = 'FP'
-                    FP += 1
-            else:
-                if is_known_same:
-                    validity = 'FN'
-                    FN += 1
-                else:
-                    validity = 'TN'
+                    if is_repost:
+                        validity = 'FP'
+                        FP += 1
+                    else:
+                        validity = 'TN'
 
             if counter < 10:
                 counter += 1
@@ -243,10 +238,8 @@ class RepostChecker:
                                 (('YES, ' if is_repost else ' NO, ') + validity,b,c,a))
 
                     if standardFormat:
-                        subreddit = a.split('_')[0]
-                        if subreddit == "" and a.split('_')[1] == 'REPOST':
-                            subreddit = a.split('_')[2]
-                        post_id = a.split('_')[-1].split('.')[0]
+                        subreddit = a.split('_REPOST_')[-1].split('_')[0]
+                        post_id   = a.split('_REPOST_')[-1].split('_')[-1].split('.')[0]
                         self.vPrint('reddit.com/r/' + subreddit + '/comments/' + post_id + '/')
                     else:
                         self.vPrint('• this image isn\'t from the standard dataset')
@@ -280,24 +273,32 @@ class RepostChecker:
                 data.append(key)
         return data
 
-    def generateRepostsForAll(self):
+    def generateRepostsForAll(self, count_per_post=1):
         '''generates reposts for every single non repost image in the image directory'''
         names = list(filter(lambda x: '_REPOST_' not in x, self.__imageToHash.keys()))
         self.vPrint('generating ' + str(len(names)) + ' reposts')
         try:
             for i, name in enumerate(names):
                 repname = '_REPOST_' + name
-                if repname in self.__imageToHash and repname in self.__imageToText:
-                    continue
+                if count_per_post == 1:
+                    if repname in self.__imageToHash and repname in self.__imageToText:
+                        continue
+                elif count_per_post > 1:
+                    if (str(count_per_post - 1) + repname) in self.__imageToHash and \
+                       (str(count_per_post - 1) + repname) in self.__imageToText:
+                        continue
+                else:
+                    return
+
                 if i % 10 == 0:
                     self.vPrint('partial: %5d/%d' % (i,len(names)))
                 target_path = join(self.img_dir, name)
-                bad_img = generate_bad_repost(target_path)
-                bad_img_hash = Hasher.hashImage(bad_img, self.__imagehash_method)
-                bad_img_text = OCR.read2(bad_img)
-                self.__imageToHash[repname] = bad_img_hash
-                self.__imageToText[repname] = bad_img_text
-                bad_img.save(join(self.img_dir, repname))
+                bad_imgs = generate_bad_repost(target_path, count=(count_per_post), save_loc=join(self.img_dir, repname))
+                for newrepname, bad_img in bad_imgs:
+                    bad_img_hash = Hasher.hashImage(bad_img, self.__imagehash_method)
+                    bad_img_text = OCR.read2(bad_img)
+                    self.__imageToHash[newrepname] = bad_img_hash
+                    self.__imageToText[newrepname] = bad_img_text
             self.vPrint('done!')
         except KeyboardInterrupt:
             self.vPrint('interrupted')
@@ -309,14 +310,57 @@ class RepostChecker:
                         sample_count: int = None,
                         seed: int = None):
         '''
-        Returns a subsample of sample_count images using the seed (if given) from the list (or the list of images loaded in this class if not provided)
+        Returns a subsample of sample_count standard images using the seed (if given) from the list (or the list of images loaded in this class if not provided)
         '''
         names = imgs_list if imgs_list else list(self.__imageToHash.keys())
+        names = list(filter(lambda x: \
+                            len(x.split('_REPOST_')[-1].split('_')) == 2 and \
+                            len(x.split('_REPOST_')[-1].split('_')[1].split('.')) == 2,
+                            names))
         if seed:
             random.seed(seed)
         total = min(len(names), sample_count) if sample_count else len(names)
         names = random.sample(names, total)
         return names
+
+    def getBiasedImagesSample(self,
+                              imgs_list: list = None,
+                              biased_target: str = None,
+                              biased_factor: float = 0.5,
+                              sample_count: int = None,
+                              seed: int = None):
+        '''
+        Returns a biased subsample towards biased_target with a factor of biased_factor, of sample_count standard images using the seed (if given), from the list (or the list of images loaded in this class if not provided)
+        '''
+        unfiltered_names = imgs_list if imgs_list else list(self.__imageToHash.keys())
+        unfiltered_names = list(filter(lambda x: \
+                                       len(x.split('_REPOST_')[-1].split('_')) == 2 and \
+                                       len(x.split('_REPOST_')[-1].split('_')[1].split('.')) == 2,
+                                       unfiltered_names))
+
+        if unfiltered_names == []:
+            return unfiltered_names
+
+        if seed:
+            random.seed(seed)
+        names = list(filter(lambda x: '_REPOST_' not in x, unfiltered_names))
+
+        target_name = biased_target if biased_target else random.choice(names)
+        target_repost_samples = list(filter(lambda x: target_name in x and target_name != x, unfiltered_names))
+
+        print('---')
+        print(target_name)
+        print(target_repost_samples)
+        print('---')
+
+        total = min(len(names), sample_count) if sample_count else len(names)
+        repost_total = min(int(total*biased_factor), len(target_repost_samples))
+
+        random_unique_samples = random.sample(names, total - repost_total)
+        random_repost_samples = random.sample(target_repost_samples, repost_total)
+
+        samples = random_repost_samples + random_unique_samples
+        return samples
 
 
     def findDetectionRate(self,

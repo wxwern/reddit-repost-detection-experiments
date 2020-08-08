@@ -44,14 +44,24 @@ def _helperFindDetectionRateFromThresholds(args):
 
 def findDetectionRate(imgs_list: list = None,
                       seed: int = 69,
+                      biased_target: str = None,
+                      biased_factor: float = None,
                       sample_count: int = None,
                       img_diff_min: int = 15,
                       text_sim_min: float = 0.7):
 
     _poolRepostChecker.readProcessedDataFromCache()
-    names = _poolRepostChecker.getImagesSample(imgs_list=imgs_list,
-                                               sample_count=sample_count,
-                                               seed=seed)
+    if biased_factor is None:
+        names = _poolRepostChecker.getImagesSample(imgs_list=imgs_list,
+                                                   sample_count=sample_count,
+                                                   seed=seed)
+    else:
+        names = _poolRepostChecker.getBiasedImagesSample(imgs_list=imgs_list,
+                                                         biased_target=biased_target,
+                                                         biased_factor=biased_factor,
+                                                         sample_count=sample_count,
+                                                         seed=seed)
+
 
     print('processing detection rate for particular samples and thresholds.')
     print('note: this will utilise 100% of every cpu core you have.')
@@ -101,7 +111,9 @@ def findDetectionRate(imgs_list: list = None,
     return vC
 
 def findDetectionRateForThresholdRange(seed:int=69,
-                                       sample_count:int=None,
+                                       sample_count:  int   = None,
+                                       biased_target: str   = None,
+                                       biased_factor: float = None,
                                        img_diff_range=(x for x in range(0, 21, 2)),
                                        text_sim_range=(x/10 for x in range(0, 10)),
                                        save_to_file:str=None):
@@ -110,6 +122,15 @@ def findDetectionRateForThresholdRange(seed:int=69,
     print('note: this will utilise 100% of every cpu core you have.')
     names = _poolRepostChecker.getImagesSample(sample_count=sample_count,
                                                seed=seed)
+
+    if biased_factor is None:
+        names = _poolRepostChecker.getImagesSample(sample_count=sample_count,
+                                                   seed=seed)
+    else:
+        names = _poolRepostChecker.getBiasedImagesSample(biased_target=biased_target,
+                                                         biased_factor=biased_factor,
+                                                         sample_count=sample_count,
+                                                         seed=seed)
     args_list = []
     counter = 0
     for i in img_diff_range:
