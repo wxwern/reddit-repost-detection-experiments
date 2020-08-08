@@ -133,8 +133,13 @@ def findDetectionRateForThresholdRange(seed:int=69,
                                                          seed=seed)
     args_list = []
     counter = 0
-    for i in img_diff_range:
-        for t in text_sim_range:
+    print('processing items with the following ranges')
+    img_diff_range = list(img_diff_range)
+    text_sim_range = list(text_sim_range)
+    print('img_diffs: ' + str(img_diff_range))
+    print('text_sims: ' + str(text_sim_range))
+    for i in list(img_diff_range):
+        for t in list(text_sim_range):
             counter += 1
             args_list.append((counter, names, i, t))
 
