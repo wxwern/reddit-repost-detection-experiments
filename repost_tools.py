@@ -3,31 +3,7 @@
 from repost.repost_checker import RepostChecker
 from repost import repost_multiprocessing as poolRepostChecker
 
-if __name__ == "__main__":
-    repostChecker = RepostChecker('scraper_cache')
-
-    print('this test script is for testing simple repost detection via image hashing and ocr capabilities')
-    print('processing images in scraper_cache...')
-    repostChecker.processData()
-    print('done!')
-    print('would you like to check repost detection for individual images now? [y/N]')
-    if input().lower().startswith('y'):
-        while True:
-            try:
-                print('type an image name in scraper_cache! (ctrl-c to exit)')
-                imgName = input()
-                print('generate a repost with prefix _REPOST_? [y/N]')
-                shdRepost = input().lower().startswith('y')
-                _ = repostChecker.checkRepostDetection(imgName, generate_repost=shdRepost)
-            except KeyboardInterrupt:
-                break
-            except:
-                print('something was wrong.')
-                continue
-
-    print()
-    poolRepostChecker.configurePoolRepostChecker('scraper_cache')
-    print('-'*30)
+def help():
     print('''
 if you\'re in an interactive shell,
 try the following examples:
@@ -67,5 +43,39 @@ assigning parts of tasks to different threads, e.g.:
     res2 = poolRepostChecker.findDetectionRateForThresholdRange(sample_count=100)
 
 ''')
+
+if __name__ == "__main__":
+    repostChecker = RepostChecker('scraper_cache')
+
+    print('this test script is for testing simple repost detection via image hashing and ocr capabilities')
+    print('would you like to process all data (1) or only load past processed cache (2)')
+    if input() == '1':
+        print('processing images in scraper_cache...')
+        repostChecker.processData()
+    else:
+        print('loading only from scraper_cache cached json...')
+        repostChecker.readProcessedDataFromCache()
+    print('done!')
+    print('would you like to check repost detection for individual images now? [y/N]')
+    if input().lower().startswith('y'):
+        while True:
+            try:
+                print('type an image name in scraper_cache! (ctrl-c to exit)')
+                imgName = input()
+                print('generate a repost with prefix _REPOST_? [y/N]')
+                shdRepost = input().lower().startswith('y')
+                _ = repostChecker.checkRepostDetection(imgName, generate_repost=shdRepost)
+            except KeyboardInterrupt:
+                break
+            except:
+                print('something was wrong.')
+                continue
+
+    print()
+    poolRepostChecker.configurePoolRepostChecker('scraper_cache')
+    print('-'*30)
+    print('''if you're in an interactive shell, call help() for help.''')
+
+
 
 

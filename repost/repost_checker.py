@@ -325,10 +325,10 @@ class RepostChecker:
         Returns a subsample of sample_count standard images using the seed (if given) from the list (or the list of images loaded in this class if not provided)
         '''
         names = imgs_list if imgs_list else list(self.__imageToHash.keys())
-        names = list(filter(lambda x: \
-                            len(x.split('_REPOST_')[-1].split('_')) == 2 and \
-                            len(x.split('_REPOST_')[-1].split('_')[1].split('.')) == 2,
-                            names))
+        names =       (list(filter(lambda x: \
+                                   len(x.split('_REPOST_')[-1].split('_')) == 2 and \
+                                   len(x.split('_REPOST_')[-1].split('_')[1].split('.')) == 2,
+                                   names)))
         if seed:
             random.seed(seed)
         total = min(len(names), sample_count) if sample_count else len(names)
@@ -345,10 +345,10 @@ class RepostChecker:
         Returns a biased subsample towards biased_target with a factor of biased_factor, of sample_count standard images using the seed (if given), from the list (or the list of images loaded in this class if not provided)
         '''
         unfiltered_names = imgs_list if imgs_list else list(self.__imageToHash.keys())
-        unfiltered_names = list(filter(lambda x: \
-                                       len(x.split('_REPOST_')[-1].split('_')) == 2 and \
-                                       len(x.split('_REPOST_')[-1].split('_')[1].split('.')) == 2,
-                                       unfiltered_names))
+        unfiltered_names =       (list(filter(lambda x: \
+                                              len(x.split('_REPOST_')[-1].split('_')) == 2 and \
+                                              len(x.split('_REPOST_')[-1].split('_')[1].split('.')) == 2,
+                                              unfiltered_names)))
 
         if unfiltered_names == []:
             return unfiltered_names
