@@ -67,7 +67,8 @@ if __name__ == "__main__":
                 _ = repostChecker.checkRepostDetection(imgName, generate_repost=shdRepost)
             except KeyboardInterrupt:
                 break
-            except:
+            except Exception as e:
+                print(e)
                 print('something was wrong.')
                 continue
 

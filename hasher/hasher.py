@@ -104,9 +104,23 @@ class Hasher:
         return str(result)
 
     @staticmethod
-    def hashText(text: str, hashMethod: str = None):
-        #TODO: Implement text hashing
-        raise NotImplementedError('Text hashing is not yet implemented')
+    def hashText(text: str, hashMethod: str = 'ENdist'):
+        d = {}
+        cList = []
+        charset = 'abcdefghijklmnopqrstuvwxyz0123456789'
+        for c in text.lower():
+            if c not in d:
+                d[c] = 0
+            d[c] += 1
+        for c in charset:
+            if c not in d:
+                d[c] = 0
+        maxVal = max(v for k,v in d.items())
+        hexadec = ''
+        for c in charset:
+            v = 0 if maxVal == 0 else min(15, d[c]*16//maxVal)
+            hexadec += hex(v)[2:]
+        return hexadec
 
     @staticmethod
     def diff(hash1: str, hash2: str, hashType: str):
@@ -125,8 +139,17 @@ class Hasher:
             hash2 = imagehash.hex_to_hash(hash2)
         elif hashType in (Hasher.Type.TEXT.value, Hasher.Type.TEXT):
             #text hash
-            #TODO: Implement text hashing
-            raise NotImplementedError('Text hashing is not yet implemented')
+            maxCount = 0
+            for c in hash1 + hash2:
+                maxCount += int(c,16)
+            diff = 0
+            for i in range(len(hash1)):
+                diff += abs(int(hash1[i],16) - int(hash2[i],16))
+
+            if maxCount == 0:
+                return 0
+
+            return diff/maxCount
         else:
             raise ValueError('An unexpected hash type ' + str(hashType) + ' was given to compute the hash difference')
 

@@ -39,6 +39,7 @@ class RepostChecker:
         self.update_cache = True
         self.__imageToHash = {}
         self.__imageToText = {}
+        self.__imageToTextHash = {}
 
     def vPrint(self,x=''):
         if self.verbose:
@@ -53,18 +54,20 @@ class RepostChecker:
                         self.__imageToHash = x['image_to_hash']
                     if 'image_to_text' in x:
                         self.__imageToText = x['image_to_text']
+                    if 'image_to_text_hash' in x:
+                        self.__imageToTextHash = x['image_to_text_hash']
         except FileNotFoundError:
             pass
 
     def saveProcessedDataToCache(self):
         if self.update_cache:
-            output = {'image_to_hash': self.__imageToHash, 'image_to_text': self.__imageToText}
+            output = {'image_to_hash': self.__imageToHash, 'image_to_text': self.__imageToText, 'image_to_text_hash': self.__imageToTextHash}
             with open(self.__cache_json_path, 'w', encoding='utf-8') as f:
                 json.dump(output, f, indent=4, ensure_ascii=False)
 
 
 
-    def processData(self):
+    def processData(self, only_cached_files=False):
         '''
         Processes all posts and returns two dictionaries in a tuple.
         The first maps image name to hash, and
@@ -78,13 +81,19 @@ class RepostChecker:
         and second one containing image name to OCR readings.
         '''
 
-        files = [f for f in listdir(self.img_dir) if isfile(join(self.img_dir, f)) and not f.startswith('.')]
-        files.sort()
+        if not only_cached_files:
+            files = [f for f in listdir(self.img_dir) if isfile(join(self.img_dir, f)) and not f.startswith('.')]
+            files.sort()
+            self.readProcessedDataFromCache()
+        else:
+            self.readProcessedDataFromCache()
+            files = list(self.__imageToHash.keys())
+            files.sort()
 
-        self.readProcessedDataFromCache()
 
         d = self.__imageToHash
         t = self.__imageToText
+        th = self.__imageToTextHash
 
         self.vPrint("loading... " + str(len(files)) + ' items')
         for i, file in enumerate(files):
@@ -96,12 +105,15 @@ class RepostChecker:
                     img = Image.open(join(self.img_dir, file))
                     d[file] = Hasher.hashImage(img, self.__imagehash_method)
                     t[file] = OCR.read2(img)
+                th[file] = Hasher.hashText(t[file])
             except KeyboardInterrupt:
                 self.vPrint('skipped remaining files')
                 if file in d:
                     del d[file]
                 if file in t:
                     del t[file]
+                if file in th:
+                    del th[file]
                 break
             except UnidentifiedImageError:
                 self.vPrint('skipped ' + file + ' (not an image)')
@@ -109,12 +121,15 @@ class RepostChecker:
                     del d[file]
                 if file in t:
                     del t[file]
+                if file in th:
+                    del th[file]
 
         self.vPrint('loaded: ' + str(len(d.items())) + ' items')
         self.__imageToHash = d
         self.__imageToText = t
+        self.__imageToTextHash = th
         self.saveProcessedDataToCache()
-        return (d,t)
+        return (d,t,th)
 
 
     def checkRepostDetection(self,
@@ -140,6 +155,7 @@ class RepostChecker:
         name_dist_dict = {}
         d = self.__imageToHash
         t = self.__imageToText
+        th = self.__imageToTextHash
 
         target_check = img
         target_path = join(self.img_dir, target_check)
@@ -151,6 +167,7 @@ class RepostChecker:
             self.vPrint('computing target metadata')
             target_hash = Hasher.hashImage(target_img, self.__imagehash_method)
             target_text = OCR.read2(target_img)
+            target_texthash = Hasher.hashText(target_text)
             d[target_check] = target_hash
             t[target_check] = target_text
             self.__imageToHash = d
@@ -158,6 +175,7 @@ class RepostChecker:
         else:
             target_hash = d[target_check]
             target_text = t[target_check]
+            target_texthash = th[target_check]
 
 
         bad_check = '_REPOST_' + target_check
@@ -168,12 +186,15 @@ class RepostChecker:
             self.vPrint('computing target metadata')
             bad_img_hash = Hasher.hashImage(bad_img, self.__imagehash_method)
             bad_img_text = OCR.read2(bad_img)
+            bad_img_texthash = Hasher.hashText(bad_img_text)
             d[bad_check] = bad_img_hash
             t[bad_check] = bad_img_text
+            th[bax_check] = bad_img_texthash
             if save_generated_repost:
                 bad_img.save(bad_img_path)
                 self.__imageToHash = d
                 self.__imageToText = t
+                self.__imageToTextHash = th
 
         if self.update_cache:
             self.saveProcessedDataToCache()
@@ -183,7 +204,7 @@ class RepostChecker:
 
         for key, value in d.items():
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
-            text_sim = SequenceMatcher(None, t[key] if key in t else '', target_text).ratio()
+            text_sim = 1-Hasher.diff(th[key], target_texthash, 'TEXT')
             distances.append \
                 ( \
                  (key, \
