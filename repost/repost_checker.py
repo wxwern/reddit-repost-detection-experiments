@@ -3,6 +3,7 @@
 import json
 import random
 from difflib import SequenceMatcher
+import Levenshtein
 from os import listdir
 from os.path import isfile, join
 from PIL import Image, UnidentifiedImageError
@@ -204,7 +205,7 @@ class RepostChecker:
 
         for key, value in d.items():
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
-            text_sim = 1-Hasher.diff(th[key], target_texthash, 'TEXT')
+            text_sim = Levenshtein.ratio(t[key], target_text)
             distances.append \
                 ( \
                  (key, \

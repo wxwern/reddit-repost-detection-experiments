@@ -25,11 +25,14 @@ def _helperFindDetectionRateFromImage(args):
     img = args[1]
     idm = args[2]
     tsm = args[3]
-    print('process : item %-5d i.e. %s' % (i, img))
+    _VERBOSE = args[4]
+    if _VERBOSE:
+        print('process : item %-5d i.e. %s' % (i, img))
     res = _poolRepostChecker.findDetectionRate(imgs_list=[img],
                                                img_diff_min=idm,
                                                text_sim_min=tsm)
-    print('finished: item %-5d i.e. %s' % (i, img))
+    if _VERBOSE:
+        print('finished: item %-5d i.e. %s' % (i, img))
     return res
 
 def _helperFindDetectionRateFromThresholds(args):
@@ -37,10 +40,13 @@ def _helperFindDetectionRateFromThresholds(args):
     imgl = args[1]
     idm = args[2]
     tsm = args[3]
-    print('process : pair %-4d i.e. idm %4d tsm %4.3f' % (i, idm, tsm))
+    _VERBOSE = args[4]
+    if _VERBOSE:
+        print('process : pair %-4d i.e. idm %4d tsm %4.3f' % (i, idm, tsm))
     res = _poolRepostChecker.findDetectionRate(imgs_list=imgl, img_diff_min=idm, text_sim_min=tsm)
     d = {'img_diff_min': idm, 'text_sim_min': tsm, 'results': res}
-    print('finished: pair %-4d i.e. idm %4d tsm %4.3f -> %s' % (i, idm, tsm, res))
+    if _VERBOSE:
+        print('finished: pair %-4d i.e. idm %4d tsm %4.3f -> %s' % (i, idm, tsm, res))
     return d
 
 def findDetectionRate(imgs_list: list = None,
@@ -49,7 +55,8 @@ def findDetectionRate(imgs_list: list = None,
                       biased_factor: float = None,
                       sample_count: int = None,
                       img_diff_min: int = 15,
-                      text_sim_min: float = 0.7):
+                      text_sim_min: float = 0.7,
+                      verbose: bool = True):
 
     _poolRepostChecker.readProcessedDataFromCache()
     if biased_factor is None:
@@ -68,7 +75,7 @@ def findDetectionRate(imgs_list: list = None,
     print('note: this should utilise at most 90% of cpu power.')
     print('elements to process: %d' % len(names))
 
-    args_list = list(map(lambda x: [0, x, img_diff_min, text_sim_min], names))
+    args_list = list(map(lambda x: [0, x, img_diff_min, text_sim_min, verbose], names))
     for i, _ in enumerate(args_list):
         args_list[i][0] = i + 1
 
@@ -118,7 +125,7 @@ def benchmark(sample_count=200):
     print('testing repost detection processing speed...')
     print('-'*30)
     ini = time.time()
-    findDetectionRate(sample_count=sample_count)
+    findDetectionRate(sample_count=sample_count, verbose=False)
     print('-'*30)
     dtime = time.time() - ini
     total_count = len(_poolRepostChecker.getImagesSample())
@@ -126,6 +133,7 @@ def benchmark(sample_count=200):
     comparisons = total_count*post_count
     post_p_s = round(post_count/dtime, 3)
     comp_p_s = round(comparisons/dtime, 3)
+    print('benchmark v2')
     print('time taken:\n- %.3f seconds for sample count %d' % (dtime, post_count))
     print('speed:\n- %.3f posts per second against %d posts each\n- %.3f post comparisons per second' % (post_p_s,total_count,comp_p_s))
 
@@ -135,7 +143,8 @@ def findDetectionRateForThresholdRange(seed:int=69,
                                        biased_factor: float = None,
                                        img_diff_range=(x for x in range(0, 21, 2)),
                                        text_sim_range=(x/10 for x in range(0, 10)),
-                                       save_to_file:str=None):
+                                       save_to_file:str=None,
+                                       verbose:bool=True):
 
     print('processing detection rate through a range of thresholds.')
     print('note: this should utilise at most 90% of cpu power.')
@@ -160,7 +169,7 @@ def findDetectionRateForThresholdRange(seed:int=69,
     for i in list(img_diff_range):
         for t in list(text_sim_range):
             counter += 1
-            args_list.append((counter, names, i, t))
+            args_list.append((counter, names, i, t, verbose))
 
     print('elements to process per threshold: %d' % len(names))
     print('threshold pairs to process       : %d' % len(args_list))
