@@ -33,5 +33,5 @@ for m in img_range:
     y = list(map(lambda p: p[1], points))
     print(points)
     for x,y,i_diff,t_sim in points:
-        plt.scatter([x],[y], color=[compute_color(i_diff, t_sim)])
+        plt.scatter(x,y, color=compute_color(i_diff, t_sim))
 plt.show()
