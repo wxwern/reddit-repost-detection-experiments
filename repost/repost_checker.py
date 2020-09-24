@@ -204,6 +204,8 @@ class RepostChecker:
         self.vPrint('\nchecking...')
 
         for key, value in d.items():
+            if key == target_check:
+                continue
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
             text_sim = Levenshtein.ratio(t[key], target_text)
             distances.append \
