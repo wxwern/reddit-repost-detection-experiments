@@ -19,11 +19,11 @@ try the following examples:
 
     # find detection rate w/ 100 random images against all images,
     # using seed 69 (so we can repeat using the same 100 random images later),
-    # given positive result refers to image difference of 15 or less,
+    # given positive result refers to image similarity of 80% or higher,
     # and text similarity of 60% or higher
     res = repostChecker.findDetectionRate(sample_count=100,
                                           seed=69,
-                                          img_diff_min=15,
+                                          img_sim_min=0.8,
                                           text_sim_min=0.6)
 
     # find detection rate w/ 100 random images against all images,
@@ -31,8 +31,8 @@ try the following examples:
     # via a range of image difference and text similarity thresholds
     res = repostChecker.findDetectionRateForThresholdRange(sample_count=100,
                                                            seed=69,
-                                                           img_diff_range=range(0,20+1),
-                                                           text_sim_range=(x/10 for x in range(0,10+1),
+                                                           img_sim_range=((0.7 + x*0.3/10) for x in range(0,10+1)),
+                                                           text_sim_range=(x/10 for x in range(0,10+1)),
                                                            save_to_file=filename)
 
 for detection rate computations, you may replace the commands with "poolRepostChecker",

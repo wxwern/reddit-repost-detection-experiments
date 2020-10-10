@@ -234,7 +234,7 @@ class RepostChecker:
 
 
         self.vPrint('--- similar results ---')
-        self.vPrint('  SAME?  | IMG_DIFF | TEXT_SIM | IMAGE')
+        self.vPrint('  SAME?  | IMG_SIM | TEXT_SIM | IMAGE')
         for a,b,c in distances:
             standardFormat = len(a.split('.')) == 2 and len(a.split('.')[0].split('_REPOST_')[-1].split('_')) == 2
             is_known_same = a.split('_REPOST_')[-1] == target_check.split('_REPOST_')[-1]
@@ -258,8 +258,8 @@ class RepostChecker:
             if counter < 10:
                 counter += 1
                 if self.verbose:
-                    self.vPrint('%8s   %8.3f   %8.3f    %-50s' % \
-                                (('YES, ' if is_repost else ' NO, ') + validity,b,c,a))
+                    self.vPrint('%8s   %7.3f   %8.3f    %-50s' % \
+                                (('YES, ' if is_repost else ' NO, ') + validity,1-b,c,a))
 
                     if standardFormat:
                         subreddit = a.split('_REPOST_')[-1].split('_')[0]
