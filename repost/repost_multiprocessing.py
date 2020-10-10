@@ -42,11 +42,11 @@ def _helperFindDetectionRateFromThresholds(args):
     tsm = args[3]
     _VERBOSE = args[4]
     if _VERBOSE:
-        print('process : pair %-4d i.e. idm %4d tsm %4.3f' % (i, idm, tsm))
+        print('process : pair %-4d i.e. ism %4.3f tsm %4.3f' % (i, idm, tsm))
     res = _poolRepostChecker.findDetectionRate(imgs_list=imgl, img_sim_min=idm, text_sim_min=tsm)
     d = {'img_sim_min': idm, 'text_sim_min': tsm, 'results': res}
     if _VERBOSE:
-        print('finished: pair %-4d i.e. idm %4d tsm %4.3f -> %s' % (i, idm, tsm, res))
+        print('finished: pair %-4d i.e. ism %4.3f tsm %4.3f -> %s' % (i, idm, tsm, res))
     return d
 
 def findDetectionRate(imgs_list: list = None,
@@ -54,8 +54,8 @@ def findDetectionRate(imgs_list: list = None,
                       biased_target: str = None,
                       biased_factor: float = None,
                       sample_count: int = None,
-                      img_sim_min: int = 15,
-                      text_sim_min: float = 0.7,
+                      img_sim_min: int = 0.8,
+                      text_sim_min: float = 0.6,
                       verbose: bool = True):
 
     _poolRepostChecker.readProcessedDataFromCache()

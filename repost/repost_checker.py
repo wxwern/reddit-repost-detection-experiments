@@ -222,7 +222,7 @@ class RepostChecker:
             img_diff = x[1]
             txt_diff = 1-x[2]
             if txt_diff <= 1-text_sim_min and img_diff <= 1-img_sim_min:
-                return (txt_diff, img_diff)
+                return (txt_diff-1, img_diff-1)
             return (img_diff, txt_diff)
 
         distances.sort(key=orderOfSort)
@@ -319,7 +319,11 @@ class RepostChecker:
 
                 try:
                     target_path = join(self.img_dir, name)
-                    bad_imgs = generate_bad_repost(target_path, count=(count_per_post), save_loc=join(self.img_dir, repname))
+                    loc = join(self.img_dir, repname)
+                    bad_imgs = generate_bad_repost(target_path, count=(count_per_post), save_loc=loc)
+                    if not isinstance(bad_imgs, list):
+                        bad_imgs = [(repname, bad_imgs)]
+
                     for newrepname, bad_img in bad_imgs:
                         bad_img_hash = Hasher.hashImage(bad_img, self.__imagehash_method)
                         bad_img_text = OCR.read2Normalized(bad_img)
