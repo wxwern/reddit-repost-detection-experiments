@@ -3,7 +3,7 @@ import json
 from matplotlib import pyplot as plt
 import numpy as np
 
-print('input computed graph json file name:')
+print('input computed graph json file names (empty line to graph):')
 d = {}
 while True:
     i = input()
@@ -16,13 +16,13 @@ while True:
                 d = x
             else:
                 d['data'] += x['data']
-            print('loaded ' + i)
         else:
             print('error: sample count mismatch')
-        print('input another computed graph json file name (type nothing to graph):')
 
 def compute_color(i_sim,t_sim):
-    return np.array([max(min(1.0,i_sim),0.0)*0.75, 0, max(min(1.0,t_sim),0.0)*0.75, 1.0])
+    if t_sim == 0:
+        return np.array([0, max(min(1.0,(i_sim-0.6)*2.5),0.0)*0.5+0.5, 0])
+    return np.array([max(min(1.0,(i_sim-0.6)*2.5),0.0)*0.75, 0, max(min(1.0,t_sim),0.0)*0.75, 1.0])
 
 plt.xlabel('precision')
 plt.ylabel('recall')
@@ -51,6 +51,9 @@ for m in img_range:
     full_list += points
     for x,y,i_diff,t_sim,_ in points:
         plt.scatter(x,y, color=compute_color(i_diff, t_sim))
+        plt.pause(0.01)
+    plt.pause(0.05)
+
 full_list.sort(key=lambda x: (x[-1], x[0]), reverse=True)
 print()
 print("Most feasible points")
