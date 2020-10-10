@@ -29,7 +29,7 @@ def _helperFindDetectionRateFromImage(args):
     if _VERBOSE:
         print('process : item %-5d i.e. %s' % (i, img))
     res = _poolRepostChecker.findDetectionRate(imgs_list=[img],
-                                               img_diff_min=idm,
+                                               img_sim_min=idm,
                                                text_sim_min=tsm)
     if _VERBOSE:
         print('finished: item %-5d i.e. %s' % (i, img))
@@ -43,8 +43,8 @@ def _helperFindDetectionRateFromThresholds(args):
     _VERBOSE = args[4]
     if _VERBOSE:
         print('process : pair %-4d i.e. idm %4d tsm %4.3f' % (i, idm, tsm))
-    res = _poolRepostChecker.findDetectionRate(imgs_list=imgl, img_diff_min=idm, text_sim_min=tsm)
-    d = {'img_diff_min': idm, 'text_sim_min': tsm, 'results': res}
+    res = _poolRepostChecker.findDetectionRate(imgs_list=imgl, img_sim_min=idm, text_sim_min=tsm)
+    d = {'img_sim_min': idm, 'text_sim_min': tsm, 'results': res}
     if _VERBOSE:
         print('finished: pair %-4d i.e. idm %4d tsm %4.3f -> %s' % (i, idm, tsm, res))
     return d
@@ -54,7 +54,7 @@ def findDetectionRate(imgs_list: list = None,
                       biased_target: str = None,
                       biased_factor: float = None,
                       sample_count: int = None,
-                      img_diff_min: int = 15,
+                      img_sim_min: int = 15,
                       text_sim_min: float = 0.7,
                       verbose: bool = True):
 
@@ -75,7 +75,7 @@ def findDetectionRate(imgs_list: list = None,
     print('note: this should utilise at most 90% of cpu power.')
     print('elements to process: %d' % len(names))
 
-    args_list = list(map(lambda x: [0, x, img_diff_min, text_sim_min, verbose], names))
+    args_list = list(map(lambda x: [0, x, img_sim_min, text_sim_min, verbose], names))
     for i, _ in enumerate(args_list):
         args_list[i][0] = i + 1
 
@@ -125,7 +125,7 @@ def benchmark(sample_count=200):
     print('testing repost detection processing speed...')
     print('-'*30)
     ini = time.time()
-    findDetectionRate(sample_count=sample_count, img_diff_min=10, text_sim_min=0.1, verbose=False)
+    findDetectionRate(sample_count=sample_count, img_sim_min=10, text_sim_min=0.1, verbose=False)
     print('-'*30)
     dtime = time.time() - ini
     total_count = len(_poolRepostChecker.getImagesSample())
@@ -139,7 +139,7 @@ def findDetectionRateForThresholdRange(seed:int=69,
                                        sample_count:  int   = None,
                                        biased_target: str   = None,
                                        biased_factor: float = None,
-                                       img_diff_range=(x for x in range(0, 21, 2)),
+                                       img_sim_range=(x for x in range(0, 21, 2)),
                                        text_sim_range=(x/10 for x in range(0, 10)),
                                        save_to_file:str=None,
                                        verbose:bool=True):
@@ -160,11 +160,11 @@ def findDetectionRateForThresholdRange(seed:int=69,
     args_list = []
     counter = 0
     print('processing items with the following ranges')
-    img_diff_range = list(img_diff_range)
+    img_sim_range = list(img_sim_range)
     text_sim_range = list(text_sim_range)
-    print('img_diffs: ' + str(img_diff_range))
+    print('img_diffs: ' + str(img_sim_range))
     print('text_sims: ' + str(text_sim_range))
-    for i in list(img_diff_range):
+    for i in list(img_sim_range):
         for t in list(text_sim_range):
             counter += 1
             args_list.append((counter, names, i, t, verbose))
@@ -180,7 +180,7 @@ def findDetectionRateForThresholdRange(seed:int=69,
 
     print()
     print('tallying up and sorting results')
-    results.sort(key=lambda x: (x['img_diff_min'], x['text_sim_min']))
+    results.sort(key=lambda x: (x['img_sim_min'], x['text_sim_min']))
 
     output = {'sample_count': sample_count, 'data': results}
 

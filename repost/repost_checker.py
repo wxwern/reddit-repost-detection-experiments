@@ -105,7 +105,7 @@ class RepostChecker:
                 if file not in d or file not in t:
                     img = Image.open(join(self.img_dir, file))
                     d[file] = Hasher.hashImage(img, self.__imagehash_method)
-                    t[file] = OCR.read2(img)
+                    t[file] = OCR.read2Normalized(img)
                 th[file] = Hasher.hashText(t[file])
             except KeyboardInterrupt:
                 self.vPrint('skipped remaining files')
@@ -135,7 +135,7 @@ class RepostChecker:
 
     def checkRepostDetection(self,
                              img: str,
-                             img_diff_min: int = 15,
+                             img_sim_min: int = 0.8,
                              text_sim_min: float = 0.7,
                              recheck_img: bool = True,
                              generate_repost: bool = False,
@@ -167,7 +167,7 @@ class RepostChecker:
         if target_img and (recheck_img or target_check not in d or target_check not in t):
             self.vPrint('computing target metadata')
             target_hash = Hasher.hashImage(target_img, self.__imagehash_method)
-            target_text = OCR.read2(target_img)
+            target_text = OCR.read2Normalized(target_img)
             target_texthash = Hasher.hashText(target_text)
             d[target_check] = target_hash
             t[target_check] = target_text
@@ -186,11 +186,11 @@ class RepostChecker:
             bad_img_path = join(self.img_dir, bad_check)
             self.vPrint('computing target metadata')
             bad_img_hash = Hasher.hashImage(bad_img, self.__imagehash_method)
-            bad_img_text = OCR.read2(bad_img)
+            bad_img_text = OCR.read2Normalized(bad_img)
             bad_img_texthash = Hasher.hashText(bad_img_text)
             d[bad_check] = bad_img_hash
             t[bad_check] = bad_img_text
-            th[bax_check] = bad_img_texthash
+            th[bad_check] = bad_img_texthash
             if save_generated_repost:
                 bad_img.save(bad_img_path)
                 self.__imageToHash = d
@@ -207,22 +207,21 @@ class RepostChecker:
             if key == target_check:
                 continue
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
-            if img_diff <= img_diff_min:
-                text_sim = Levenshtein.ratio(t[key], target_text)
-                distances.append \
+            text_sim = Levenshtein.ratio(t[key], target_text)
+            distances.append \
                     ( \
                      (key, \
                       img_diff, \
                       text_sim)
                      )
-                name_dist_dict[key] = (distances[-1][1], distances[-1][2])
+            name_dist_dict[key] = (distances[-1][1], distances[-1][2])
 
 
         def orderOfSort(x):
             '''dynamic sorting to prioritise text if image and text are both really close'''
             img_diff = x[1]
             txt_diff = 1-x[2]
-            if txt_diff <= 1-text_sim_min and img_diff <= img_diff_min:
+            if txt_diff <= 1-text_sim_min and img_diff <= 1-img_sim_min:
                 return (txt_diff, img_diff)
             return (img_diff, txt_diff)
 
@@ -239,7 +238,7 @@ class RepostChecker:
         for a,b,c in distances:
             standardFormat = len(a.split('.')) == 2 and len(a.split('.')[0].split('_REPOST_')[-1].split('_')) == 2
             is_known_same = a.split('_REPOST_')[-1] == target_check.split('_REPOST_')[-1]
-            is_repost = b <= img_diff_min and c >= text_sim_min
+            is_repost = b <= 1-img_sim_min and c >= text_sim_min
             if not standardFormat:
                 validity = '??'
             else:
@@ -259,7 +258,7 @@ class RepostChecker:
             if counter < 10:
                 counter += 1
                 if self.verbose:
-                    self.vPrint('%8s   %8d   %8.3f    %-50s' % \
+                    self.vPrint('%8s   %8.3f   %8.3f    %-50s' % \
                                 (('YES, ' if is_repost else ' NO, ') + validity,b,c,a))
 
                     if standardFormat:
@@ -323,7 +322,7 @@ class RepostChecker:
                     bad_imgs = generate_bad_repost(target_path, count=(count_per_post), save_loc=join(self.img_dir, repname))
                     for newrepname, bad_img in bad_imgs:
                         bad_img_hash = Hasher.hashImage(bad_img, self.__imagehash_method)
-                        bad_img_text = OCR.read2(bad_img)
+                        bad_img_text = OCR.read2Normalized(bad_img)
                         self.__imageToHash[newrepname] = bad_img_hash
                         self.__imageToText[newrepname] = bad_img_text
                 except FileNotFoundError as e:
@@ -404,7 +403,7 @@ class RepostChecker:
                           imgs_list: list = None,
                           sample_count: int = None,
                           seed: int = 69,
-                          img_diff_min: int = 15,
+                          img_sim_min: int = 15,
                           text_sim_min: float = 0.7):
         '''finds the repost detection rate (precision, recall, true/false positives/negatives) given the parameters'''
 
@@ -423,7 +422,7 @@ class RepostChecker:
             for i, img in enumerate(names):
                 if sample_count and i >= sample_count:
                     break
-                res = self.checkRepostDetection(img, img_diff_min=img_diff_min, text_sim_min=text_sim_min, recheck_img=False, generate_repost=False)
+                res = self.checkRepostDetection(img, img_sim_min=img_sim_min, text_sim_min=text_sim_min, recheck_img=False, generate_repost=False)
                 for _, data in res.items():
                     vC[data['validity']] += 1
                 if v:
@@ -482,7 +481,7 @@ class RepostChecker:
     def findDetectionRateForThresholdRange(self,
                                            seed:int=69,
                                            sample_count:int=None,
-                                           img_diff_range=(x for x in range(0, 21, 2)),
+                                           img_sim_range=(0.7+x*0.3/10 for x in range(0, 10)),
                                            text_sim_range=(x/10 for x in range(0, 10)),
                                            save_to_file:str=None):
         data = []
@@ -493,19 +492,19 @@ class RepostChecker:
         c = self.update_cache
         self.update_cache = False
 
-        for i in img_diff_range:
+        for i in img_sim_range:
             for t in text_sim_range:
                 if v:
-                    print('processing img_diff_min %d text_sim_min %.2f' % \
+                    print('processing img_sim_min %d text_sim_min %.2f' % \
                           (i, t))
                 res = self.findDetectionRate(sample_count=sample_count,
                                              seed=seed,
-                                             img_diff_min=i,
+                                             img_sim_min=i,
                                              text_sim_min=t)
 
-                d = {'img_diff_min': i, 'text_sim_min': t, 'results': res}
+                d = {'img_sim_min': i, 'text_sim_min': t, 'results': res}
                 if v:
-                    print('completed img_diff_min %d text_sim_min %.2f' % \
+                    print('completed img_sim_min %d text_sim_min %.2f' % \
                           (i, t))
                     print(json.dumps(d, indent=4))
                 data.append(d)

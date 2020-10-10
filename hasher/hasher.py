@@ -3,6 +3,7 @@
 from enum import Enum
 from PIL import Image, UnidentifiedImageError
 import imagehash
+import math
 
 class Hasher:
     """
@@ -75,7 +76,7 @@ class Hasher:
                                         retainRGB=(hashType==Hasher.Type.IMAGERGB))
 
     @staticmethod
-    def hashImage(image: Image, hashMethod: str = 'dHash', retainRGB: bool = False):
+    def hashImage(image: Image, hashMethod: str = 'dHash', hash_size: int = 8):
         """
         Hashes the image given into using the relevant hashing method.
 
@@ -87,10 +88,6 @@ class Hasher:
         if isinstance(image, str):
             image = Image.open(image)
 
-        if retainRGB:
-            #TODO: implement RGB information retention
-            raise NotImplementedError('Retain RGB information within a hash is not implemented yet')
-
         result = {
             Hasher.ImageHashMethod.AHASH.value: imagehash.average_hash,
             Hasher.ImageHashMethod.PHASH.value: imagehash.phash,
@@ -99,7 +96,7 @@ class Hasher:
         }[hashMethod.value \
           if isinstance(hashMethod, Hasher.ImageHashMethod) else \
           hashMethod] \
-        (image)
+        (image, hash_size=hash_size)
 
         return str(result)
 
@@ -123,6 +120,20 @@ class Hasher:
         return hexadec
 
     @staticmethod
+    def sim(hash1: str, hash2: str, hashType: str):
+        """
+        Computes the similarity between two hash strings for a specific hash type.
+
+        Parameters:
+        - hash1: first hash string to be compared.
+        - hash2: second hash string to be compared.
+        - hashType: the type of the hash, i.e. IMAGE or TEXT.
+        """
+        x = diff(hash1, hash2, hashType)
+        if x:
+            return 1-x
+
+    @staticmethod
     def diff(hash1: str, hash2: str, hashType: str):
         """
         Computes the difference between two hash strings for a specific hash type.
@@ -134,9 +145,15 @@ class Hasher:
         """
 
         if hashType in (Hasher.Type.IMAGE.value, Hasher.Type.IMAGE):
+            if len(hash1) != len(hash2):
+                return 1.0
+            l = len(hash1)
+
             #image hash
             hash1 = imagehash.hex_to_hash(hash1)
             hash2 = imagehash.hex_to_hash(hash2)
+
+            return abs(hash1-hash2)/(l*4)
         elif hashType in (Hasher.Type.TEXT.value, Hasher.Type.TEXT):
             #text hash
             maxCount = 0
@@ -153,4 +170,3 @@ class Hasher:
         else:
             raise ValueError('An unexpected hash type ' + str(hashType) + ' was given to compute the hash difference')
 
-        return abs(hash1-hash2)

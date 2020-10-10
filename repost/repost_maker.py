@@ -40,18 +40,18 @@ def generate_bad_repost(img: Image, count: int=1, save_loc: str=None):
         new_img = img.resize(new_size, Image.ANTIALIAS) \
                      .rotate(rotate_angle).crop(crop_box)
 
-        save_dir = str(os.path.sep).join(save_loc.split(str(os.path.sep))[:-1])
-        save_name = save_loc.split(str(os.path.sep))[-1]
-
-        if save_dir != '':
-            save_dir += str(os.path.sep)
-        if count > 1:
-            save_name = str(count - 1) + save_name
         if save_loc:
+            save_dir = str(os.path.sep).join(save_loc.split(str(os.path.sep))[:-1])
+            save_name = save_loc.split(str(os.path.sep))[-1]
+
+            if save_dir != '':
+                save_dir += str(os.path.sep)
+            if count > 1:
+                save_name = str(count - 1) + save_name
             new_img.save(save_dir + save_name)
 
         count -= 1
 
-        lst_imgs.append((save_name, new_img))
+        lst_imgs.append((save_name if save_loc else None, new_img))
 
     return lst_imgs if len(lst_imgs) > 1 else new_img

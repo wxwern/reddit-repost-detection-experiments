@@ -37,8 +37,22 @@ class OCR:
 
         return final.strip()
 
+
+    def read2Normalized(meme):
+        return OCR.read2(meme, normalized=True)
+
     @staticmethod
-    def read2(meme):
+    def read2(meme, normalized=False):
+        if isinstance(meme, str):
+            meme = Image.open(meme)
+        if normalized:
+            x,y = list(meme.size)
+            scale_factor = 500/x
+            x *= scale_factor
+            y *= scale_factor
+
+            meme = meme.resize((int(x),int(y)), Image.ANTIALIAS)
+
         rawdata = pytesseract.image_to_data(meme, output_type=pytesseract.Output.DICT)
         groups = OCR.getTextGroups(rawdata)
         groups.sort(key=lambda x: x.getTop())
@@ -58,13 +72,15 @@ class OCR:
                 return data
 
         if isinstance(data, dict):
-            output = [None] * len(data.get('text'))
+            if len(data.get('text')) == 0:
+                return []
+            output = [None] * len(max(data.values(), key=len))
             for key, value in data.items():
                 for i, e in enumerate(value):
                     if output[i] is None:
                         output[i] = {}
                     output[i][key] = e
-            return list(filter(lambda x: x['text'].strip() != '', output))
+            return list(filter(lambda x: 'text' in x and x['text'].strip() != '', output))
 
         raise ValueError('Are you sure the correct pytesseract input is provided? Expecting a dict but got %s' % str(type(data)))
 
@@ -160,8 +176,8 @@ class OCR:
                 dist = abs(x_dist - word_height*X_FACTOR) + \
                        abs(y_dist - word_height*Y_FACTOR)
 
-                if x_dist < word_height * X_FACTOR and \
-                    y_dist < word_height * Y_FACTOR:
+                if x_dist < min(group.getHeight(), word_height) * X_FACTOR and \
+                    y_dist < min(group.getHeight(), word_height) * Y_FACTOR:
 
                     if consider is None or dist < c_dist:
                         consider = group
