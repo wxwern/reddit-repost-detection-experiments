@@ -1,10 +1,22 @@
+#generated outputs
 *.o
 *.out
 *.pyc
 *.log
 *.swp
 
+#cache
 scraper_cache/
 
+#old stuff (manually marked)
+*.old
+*.old/
+
+#generated graph data
+/*.png
+/*.jpg
+/*.json
+
+#system thumbnails
 .DS_Store
 desktop.ini
