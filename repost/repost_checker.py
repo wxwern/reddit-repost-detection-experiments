@@ -207,14 +207,15 @@ class RepostChecker:
             if key == target_check:
                 continue
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
-            text_sim = Levenshtein.ratio(t[key], target_text)
-            distances.append \
-                ( \
-                 (key, \
-                  img_diff, \
-                  text_sim)
-                 )
-            name_dist_dict[key] = (distances[-1][1], distances[-1][2])
+            if img_diff <= img_diff_min:
+                text_sim = Levenshtein.ratio(t[key], target_text)
+                distances.append \
+                    ( \
+                     (key, \
+                      img_diff, \
+                      text_sim)
+                     )
+                name_dist_dict[key] = (distances[-1][1], distances[-1][2])
 
 
         def orderOfSort(x):

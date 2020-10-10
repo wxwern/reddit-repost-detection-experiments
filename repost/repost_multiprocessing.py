@@ -121,17 +121,17 @@ def findDetectionRate(imgs_list: list = None,
 
     return vC
 
-def benchmark(sample_count=300):
+def benchmark(sample_count=200):
     print('testing repost detection processing speed...')
     print('-'*30)
     ini = time.time()
-    findDetectionRate(sample_count=sample_count, verbose=False)
+    findDetectionRate(sample_count=sample_count, img_diff_min=10, text_sim_min=0.1, verbose=False)
     print('-'*30)
     dtime = time.time() - ini
     total_count = len(_poolRepostChecker.getImagesSample())
     post_count = min(sample_count,total_count)
     post_p_s = round(post_count/dtime, 3)
-    print('benchmark v2')
+    print('benchmark v3')
     print('time taken:\n- %.3f seconds for sample count %d' % (dtime, post_count))
     print('speed:\n- %.3f posts per second against %d posts each' % (post_p_s,total_count))
 
