@@ -71,7 +71,7 @@ class Subreddit(RedditObject):
         if flair:
             u = self.getSearchUrl(json=True, sort=sort, flair=flair, max_no=max_no)
         else:
-            u = self.getPostsUrl() + '.json?limit=' + str(max_no)
+            u = self.getPostsUrl(sort=sort) + '.json?limit=' + str(max_no)
         if use_next and self.__posts_next:
             u += "&after=" + self.__posts_next
             self.__posts_next = None
