@@ -11,9 +11,10 @@ except ImportError:
     from reddit.redditpost import RedditPost, RedditComment
     from reddit.redditobject import RedditObject
 
+from datetime import datetime
 import os
 if __name__ == "__main__":
-    directory = "scraper_cache"
+    directory = "scraper_cache_%s" % (datetime.now().isoformat())
     if not os.path.exists(directory):
         os.makedirs(directory)
     create_filepath = lambda x: directory + "/" + x
