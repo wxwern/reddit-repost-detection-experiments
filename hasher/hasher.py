@@ -76,7 +76,7 @@ class Hasher:
                                         retainRGB=(hashType==Hasher.Type.IMAGERGB))
 
     @staticmethod
-    def hashImage(image: Image, hashMethod: str = 'dHash', hash_size: int = 8):
+    def hashImage(image: Image, hashMethod: str = 'dHash', hash_size: int = 8, retainRGB = False):
         """
         Hashes the image given into using the relevant hashing method.
 
