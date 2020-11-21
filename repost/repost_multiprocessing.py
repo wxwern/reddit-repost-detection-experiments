@@ -56,6 +56,7 @@ def findDetectionRate(imgs_list: list = None,
                       sample_count: int = None,
                       img_sim_min: int = 0.8,
                       text_sim_min: float = 0.6,
+                      cpu_threshold: float = 0.9,
                       verbose: bool = True):
 
     _poolRepostChecker.readProcessedDataFromCache()
@@ -72,14 +73,14 @@ def findDetectionRate(imgs_list: list = None,
 
 
     print('processing detection rate for particular samples and thresholds.')
-    print('note: this should utilise at most 90% of cpu power.')
+    print('note: this should utilise at most %d%% of cpu power.' % int(cpu_threshold*100))
     print('elements to process: %d' % len(names))
 
     args_list = list(map(lambda x: [0, x, img_sim_min, text_sim_min, verbose], names))
     for i, _ in enumerate(args_list):
         args_list[i][0] = i + 1
 
-    pool = Pool(max(int(cpu_count()*0.9), 1))
+    pool = Pool(max(int(cpu_count()*cpu_threshold), 1))
     results = pool.map(_helperFindDetectionRateFromImage, args_list)
     pool.close()
     pool.join()
@@ -139,13 +140,14 @@ def findDetectionRateForThresholdRange(seed:int=69,
                                        sample_count:  int   = None,
                                        biased_target: str   = None,
                                        biased_factor: float = None,
-                                       img_sim_range=(x for x in range(0, 21, 2)),
+                                       img_sim_range=((0.7 + x/40) for x in range(0, 12)),
                                        text_sim_range=(x/10 for x in range(0, 10)),
                                        save_to_file:str=None,
+                                       cpu_threshold:float=0.9,
                                        verbose:bool=True):
 
     print('processing detection rate through a range of thresholds.')
-    print('note: this should utilise at most 90% of cpu power.')
+    print('note: this should utilise at most %d%% of cpu power.' % int(cpu_threshold*100))
     names = _poolRepostChecker.getImagesSample(sample_count=sample_count,
                                                seed=seed)
 
@@ -173,7 +175,7 @@ def findDetectionRateForThresholdRange(seed:int=69,
     print('threshold pairs to process       : %d' % len(args_list))
     print()
 
-    pool = Pool(max(int(cpu_count()*0.9), 1))
+    pool = Pool(max(int(cpu_count()*cpu_threshold), 1))
     results = pool.map(_helperFindDetectionRateFromThresholds, args_list)
     pool.close()
     pool.join()
