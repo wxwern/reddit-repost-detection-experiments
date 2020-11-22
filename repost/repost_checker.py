@@ -68,7 +68,7 @@ class RepostChecker:
 
 
 
-    def processData(self, only_cached_files=False):
+    def processData(self, only_cached_files=False, max_capacity=None):
         '''
         Processes all posts and returns two dictionaries in a tuple.
         The first maps image name to hash, and
@@ -91,6 +91,8 @@ class RepostChecker:
             files = list(self.__imageToHash.keys())
             files.sort()
 
+        if max_capacity is not None:
+            files = files[:max_capacity]
 
         d = self.__imageToHash
         t = self.__imageToText
@@ -207,7 +209,7 @@ class RepostChecker:
             if key == target_check:
                 continue
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
-            text_sim = Levenshtein.ratio(t[key], target_text)
+            text_sim = 0.0 if text_sim_min <= 0.0 else Levenshtein.ratio(t[key], target_text)
             distances.append \
                     ( \
                      (key, \
@@ -297,7 +299,7 @@ class RepostChecker:
                 data.append(key)
         return data
 
-    def generateRepostsForAll(self, count_per_post=1):
+    def generateRepostsForAll(self, count_per_post=1, res=None, rot=None, asp=None, crop=None):
         '''generates reposts for every single non repost image in the image directory'''
         names = list(filter(lambda x: '_REPOST_' not in x, self.__imageToHash.keys()))
         self.vPrint('generating ' + str(len(names)) + ' reposts')
@@ -320,7 +322,13 @@ class RepostChecker:
                 try:
                     target_path = join(self.img_dir, name)
                     loc = join(self.img_dir, repname)
-                    bad_imgs = generate_bad_repost(target_path, count=(count_per_post), save_loc=loc)
+                    bad_imgs = generate_bad_repost(target_path,
+                                                   count=(count_per_post),
+                                                   res=res,
+                                                   rot=rot,
+                                                   asp=asp,
+                                                   crop=crop,
+                                                   save_loc=loc)
                     if not isinstance(bad_imgs, list):
                         bad_imgs = [(repname, bad_imgs)]
 
