@@ -32,7 +32,7 @@ def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=
         x,y = list(img.size)
         if res != 1.0:
             scale_factor = res if res else random.uniform(0.2, 1.0)
-            scale_factor = max(x*downscale_factor, 250)/x
+            scale_factor = max(x*scale_factor, 250)/x
         else:
             scale_factor = 1
 
@@ -62,21 +62,21 @@ def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=
 
         if crop != (0,0,0,0):
             crop_box = \
-            (newsize[0]*crop[0],
-             newsize[1]*crop[1],
+            (new_size[0]*crop[0],
+             new_size[1]*crop[1],
              new_size[0]*(1 - crop[2]),
              new_size[1]*(1 - crop[3]))
 
 
 
         #final computation
+        new_img = img
         if asp != 1.0 or res != 1.0:
-            new_img = img.resize(new_size, Image.ANTIALIAS)
+            new_img = new_img.resize(new_size, Image.ANTIALIAS)
         if rot != 0.0:
             new_img = new_img.rotate(rotate_angle)
         if crop != (0,0,0,0):
             new_img = new_img.crop(crop_box)
-
 
         #saving
         if save_loc:

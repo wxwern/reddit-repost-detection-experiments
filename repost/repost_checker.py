@@ -40,7 +40,6 @@ class RepostChecker:
         self.update_cache = True
         self.__imageToHash = {}
         self.__imageToText = {}
-        self.__imageToTextHash = {}
 
     def vPrint(self,x=''):
         if self.verbose:
@@ -62,11 +61,15 @@ class RepostChecker:
 
     def saveProcessedDataToCache(self):
         if self.update_cache:
-            output = {'image_to_hash': self.__imageToHash, 'image_to_text': self.__imageToText, 'image_to_text_hash': self.__imageToTextHash}
+            output = {'image_to_hash': self.__imageToHash, 'image_to_text': self.__imageToText}
             with open(self.__cache_json_path, 'w', encoding='utf-8') as f:
                 json.dump(output, f, indent=4, ensure_ascii=False)
 
+    def getCacheJsonPath(self):
+        return self.__cache_json_path
 
+    def setJsonCacheFilenmaeTarget(self, filename='__repost_check_data__.json'):
+        self.__cache_json_path = join(self.img_dir, filename)
 
     def processData(self, only_cached_files=False, max_capacity=None):
         '''
@@ -96,11 +99,10 @@ class RepostChecker:
 
         d = self.__imageToHash
         t = self.__imageToText
-        th = self.__imageToTextHash
 
         self.vPrint("loading... " + str(len(files)) + ' items')
         for i, file in enumerate(files):
-            if i % (len(files)//20) == 0:
+            if len(files) < 50 or i % (len(files)//20) == 0:
                 self.vPrint('partial: %5d/%d' % (i,len(files)))
 
             try:
@@ -108,15 +110,12 @@ class RepostChecker:
                     img = Image.open(join(self.img_dir, file))
                     d[file] = Hasher.hashImage(img, self.__imagehash_method)
                     t[file] = OCR.read2Normalized(img)
-                th[file] = Hasher.hashText(t[file])
             except KeyboardInterrupt:
                 self.vPrint('skipped remaining files')
                 if file in d:
                     del d[file]
                 if file in t:
                     del t[file]
-                if file in th:
-                    del th[file]
                 break
             except UnidentifiedImageError:
                 self.vPrint('skipped ' + file + ' (not an image)')
@@ -124,15 +123,12 @@ class RepostChecker:
                     del d[file]
                 if file in t:
                     del t[file]
-                if file in th:
-                    del th[file]
 
         self.vPrint('loaded: ' + str(len(d.items())) + ' items')
         self.__imageToHash = d
         self.__imageToText = t
-        self.__imageToTextHash = th
         self.saveProcessedDataToCache()
-        return (d,t,th)
+        return (d,t)
 
 
     def checkRepostDetection(self,
@@ -158,7 +154,6 @@ class RepostChecker:
         name_dist_dict = {}
         d = self.__imageToHash
         t = self.__imageToText
-        th = self.__imageToTextHash
 
         target_check = img
         target_path = join(self.img_dir, target_check)
@@ -178,7 +173,6 @@ class RepostChecker:
         else:
             target_hash = d[target_check]
             target_text = t[target_check]
-            target_texthash = th[target_check]
 
 
         bad_check = '_REPOST_' + target_check
@@ -192,12 +186,10 @@ class RepostChecker:
             bad_img_texthash = Hasher.hashText(bad_img_text)
             d[bad_check] = bad_img_hash
             t[bad_check] = bad_img_text
-            th[bad_check] = bad_img_texthash
             if save_generated_repost:
                 bad_img.save(bad_img_path)
                 self.__imageToHash = d
                 self.__imageToText = t
-                self.__imageToTextHash = th
 
         if self.update_cache:
             self.saveProcessedDataToCache()
@@ -299,13 +291,14 @@ class RepostChecker:
                 data.append(key)
         return data
 
-    def generateRepostsForAll(self, count_per_post=1, res=None, rot=None, asp=None, crop=None):
+    def generateRepostsForAll(self, count_per_post=1, res=None, rot=None, asp=None, crop=None, uid=None):
         '''generates reposts for every single non repost image in the image directory'''
         names = list(filter(lambda x: '_REPOST_' not in x, self.__imageToHash.keys()))
         self.vPrint('generating ' + str(len(names)) + ' reposts')
+        interrupted = False
         try:
             for i, name in enumerate(names):
-                repname = '_REPOST_' + name
+                repname = (str(uid) if uid else '') + '_REPOST_' + name
                 if count_per_post == 1:
                     if repname in self.__imageToHash and repname in self.__imageToText:
                         continue
@@ -316,7 +309,7 @@ class RepostChecker:
                 else:
                     return
 
-                if i % 10 == 0:
+                if i < 30 or i % 10 == 0:
                     self.vPrint('partial: %5d/%d' % (i,len(names)))
 
                 try:
@@ -349,9 +342,11 @@ class RepostChecker:
             self.vPrint('done!')
         except KeyboardInterrupt:
             self.vPrint('interrupted!')
+            interrupted=True
         finally:
             self.saveProcessedDataToCache()
             self.vPrint('saved!')
+        return not interrupted
 
     def getImagesSample(self,
                         imgs_list: list = None,

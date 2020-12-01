@@ -8,10 +8,10 @@ from multiprocessing import Pool, cpu_count
 import json
 import time
 
-_poolRepostChecker = RepostChecker('scraper_cache')
-_poolRepostChecker.verbose = False
-_poolRepostChecker.update_cache = False
-_poolRepostChecker.readProcessedDataFromCache()
+#_poolRepostChecker = RepostChecker('scraper_cache')
+#_poolRepostChecker.verbose = False
+#_poolRepostChecker.update_cache = False
+#_poolRepostChecker.readProcessedDataFromCache()
 
 def configurePoolRepostChecker(img_dir: str):
     global _poolRepostChecker
@@ -21,14 +21,14 @@ def configurePoolRepostChecker(img_dir: str):
     _poolRepostChecker.readProcessedDataFromCache()
 
 def _helperFindDetectionRateFromImage(args):
-    i = args[0]
-    img = args[1]
-    idm = args[2]
-    tsm = args[3]
-    _VERBOSE = args[4]
+    i = args[1]
+    img = args[2]
+    idm = args[3]
+    tsm = args[4]
+    _VERBOSE = args[5]
     if _VERBOSE:
         print('process : item %-5d i.e. %s' % (i, img))
-    res = _poolRepostChecker.findDetectionRate(imgs_list=[img],
+    res = args[0].findDetectionRate(imgs_list=[img],
                                                img_sim_min=idm,
                                                text_sim_min=tsm)
     if _VERBOSE:
@@ -36,14 +36,14 @@ def _helperFindDetectionRateFromImage(args):
     return res
 
 def _helperFindDetectionRateFromThresholds(args):
-    i = args[0]
-    imgl = args[1]
-    idm = args[2]
-    tsm = args[3]
-    _VERBOSE = args[4]
+    i = args[1]
+    imgl = args[2]
+    idm = args[3]
+    tsm = args[4]
+    _VERBOSE = args[5]
     if _VERBOSE:
         print('process : pair %-4d i.e. ism %4.3f tsm %4.3f' % (i, idm, tsm))
-    res = _poolRepostChecker.findDetectionRate(imgs_list=imgl, img_sim_min=idm, text_sim_min=tsm)
+    res = args[0].findDetectionRate(imgs_list=imgl, img_sim_min=idm, text_sim_min=tsm)
     d = {'img_sim_min': idm, 'text_sim_min': tsm, 'results': res}
     if _VERBOSE:
         print('finished: pair %-4d i.e. ism %4.3f tsm %4.3f -> %s' % (i, idm, tsm, res))
@@ -58,6 +58,12 @@ def findDetectionRate(imgs_list: list = None,
                       text_sim_min: float = 0.6,
                       cpu_threshold: float = 0.9,
                       verbose: bool = True):
+    try:
+        _poolRepostChecker
+    except NameError:
+        print("Pool Repost Checker is not yet configured.")
+        print("run configurePoolRepostChecker to do so.")
+        return None
 
     _poolRepostChecker.readProcessedDataFromCache()
     if biased_factor is None:
@@ -76,12 +82,15 @@ def findDetectionRate(imgs_list: list = None,
     print('note: this should utilise at most %d%% of cpu power.' % int(cpu_threshold*100))
     print('elements to process: %d' % len(names))
 
-    args_list = list(map(lambda x: [0, x, img_sim_min, text_sim_min, verbose], names))
+    args_list = list(map(lambda x: [_poolRepostChecker, 0, x, img_sim_min, text_sim_min, verbose], names))
     for i, _ in enumerate(args_list):
-        args_list[i][0] = i + 1
+        args_list[i][1] = i + 1
 
     pool = Pool(max(int(cpu_count()*cpu_threshold), 1))
-    results = pool.map(_helperFindDetectionRateFromImage, args_list)
+    results = []
+    for i, x in enumerate(pool.imap_unordered(_helperFindDetectionRateFromImage, args_list), 1):
+        print("[%6.2f%% complete]" % (i/len(args_list)*100))
+        results.append(x)
     pool.close()
     pool.join()
 
@@ -117,8 +126,7 @@ def findDetectionRate(imgs_list: list = None,
         print('failed to compute metrics due to division by zero')
 
     print('stats     : %s' % str(vC))
-    print()
-
+    print('\a')
 
     return vC
 
@@ -140,11 +148,18 @@ def findDetectionRateForThresholdRange(seed:int=69,
                                        sample_count:  int   = None,
                                        biased_target: str   = None,
                                        biased_factor: float = None,
-                                       img_sim_range=((0.7 + x/40) for x in range(0, 12)),
-                                       text_sim_range=(x/10 for x in range(0, 10)),
-                                       save_to_file:str=None,
-                                       cpu_threshold:float=0.9,
-                                       verbose:bool=True):
+                                       img_sim_range  = list((0.7 + x/40) for x in range(0, 12)),
+                                       text_sim_range = list(x/10 for x in range(0, 10)),
+                                       save_to_file:str = None,
+                                       cpu_threshold:float = 0.9,
+                                       verbose:bool = True):
+
+    try:
+        _poolRepostChecker
+    except NameError:
+        print("Pool Repost Checker is not yet configured.")
+        print("run configurePoolRepostChecker to do so.")
+        return None
 
     print('processing detection rate through a range of thresholds.')
     print('note: this should utilise at most %d%% of cpu power.' % int(cpu_threshold*100))
@@ -169,14 +184,17 @@ def findDetectionRateForThresholdRange(seed:int=69,
     for i in list(img_sim_range):
         for t in list(text_sim_range):
             counter += 1
-            args_list.append((counter, names, i, t, verbose))
+            args_list.append((_poolRepostChecker, counter, names, i, t, verbose))
 
     print('elements to process per threshold: %d' % len(names))
     print('threshold pairs to process       : %d' % len(args_list))
     print()
 
     pool = Pool(max(int(cpu_count()*cpu_threshold), 1))
-    results = pool.map(_helperFindDetectionRateFromThresholds, args_list)
+    results = []
+    for i, e in enumerate(pool.imap_unordered(_helperFindDetectionRateFromThresholds, args_list), 1):
+        print("[%6.2f%% complete]" % (i/len(args_list)*100))
+        results.append(e)
     pool.close()
     pool.join()
 
@@ -191,5 +209,5 @@ def findDetectionRateForThresholdRange(seed:int=69,
         with open(str(save_to_file), 'w') as f:
             json.dump(output, f, indent=4)
 
-    print('done!')
+    print('done!\a')
     return output
