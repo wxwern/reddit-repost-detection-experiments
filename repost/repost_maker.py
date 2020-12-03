@@ -4,7 +4,7 @@ import random
 import os
 from PIL import Image
 
-def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=None, asp: float=None, crop: tuple=None, save_loc: str=None):
+def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=None, asp: float=None, crop: tuple=None, save_loc: str=None, skip_duplicates: bool =True):
     """
     Generates and returns a modified image based upon the input image, often seen as compression, cropping etc in reposts.
 
@@ -23,6 +23,9 @@ def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=
 
     If a save location is given, it'll be saved there. If count is greater than one, a list will be returned, and images will have numbers prefixed except the first (which is considered '0').
     """
+    if os.path.exists(save_loc) and skip_duplicates and count == 1:
+        return Image.open(save_loc)
+
     if isinstance(img, str):
         img = Image.open(img)
 
