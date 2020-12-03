@@ -13,12 +13,14 @@ import time
 #_poolRepostChecker.update_cache = False
 #_poolRepostChecker.readProcessedDataFromCache()
 
-def configurePoolRepostChecker(img_dir: str):
+def configurePoolRepostChecker(img_dir: str, json_filename='__repost_check_data__.json'):
     global _poolRepostChecker
     _poolRepostChecker = RepostChecker(img_dir)
     _poolRepostChecker.verbose = False
     _poolRepostChecker.update_cache = False
+    _poolRepostChecker.setJsonCacheFilenmaeTarget(filename=json_filename)
     _poolRepostChecker.readProcessedDataFromCache()
+    #return _poolRepostChecker
 
 def _helperFindDetectionRateFromImage(args):
     i = args[1]
