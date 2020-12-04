@@ -88,17 +88,23 @@ class Hasher:
         if isinstance(image, str):
             image = Image.open(image)
 
-        result = {
-            Hasher.ImageHashMethod.AHASH.value: imagehash.average_hash,
-            Hasher.ImageHashMethod.PHASH.value: imagehash.phash,
-            Hasher.ImageHashMethod.DHASH.value: imagehash.dhash,
-            Hasher.ImageHashMethod.WHASH.value: imagehash.whash,
-        }[hashMethod.value \
-          if isinstance(hashMethod, Hasher.ImageHashMethod) else \
-          hashMethod] \
-        (image, hash_size=hash_size)
-
-        return str(result)
+        img = image.convert("L")
+        img = img.resize((8, 8), Image.ANTIALIAS)
+        prev_px = img.getpixel((0, 7))
+        diff_hash = 0
+        for row in range(0, 8, 2):
+            for col in range(8):
+                diff_hash <<= 1
+                pixel = img.getpixel((col, row))
+                diff_hash |= 1 * (pixel >= prev_px)
+                prev_px = pixel
+            row += 1
+            for col in range(7, -1, -1):
+                diff_hash <<= 1
+                pixel = img.getpixel((col, row))
+                diff_hash |= 1 * (pixel >= prev_px)
+                prev_px = pixel
+        return str('%x' % (diff_hash))
 
     @staticmethod
     def hashText(text: str, hashMethod: str = 'ENdist'):
@@ -145,15 +151,8 @@ class Hasher:
         """
 
         if hashType in (Hasher.Type.IMAGE.value, Hasher.Type.IMAGE):
-            if len(hash1) != len(hash2):
-                return 1.0
-            l = len(hash1)
-
-            #image hash
-            hash1 = imagehash.hex_to_hash(hash1)
-            hash2 = imagehash.hex_to_hash(hash2)
-
-            return abs(hash1-hash2)/(l*4)
+            return (1 - (((64 - bin(int(hash1, 16) ^ int(hash2,16)).count('1')))/64.0))
+            
         elif hashType in (Hasher.Type.TEXT.value, Hasher.Type.TEXT):
             #text hash
             maxCount = 0
