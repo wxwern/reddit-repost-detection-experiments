@@ -3,30 +3,45 @@
 
 
 ## Installation and usage
-Install the dependencies in this project with:
+Set up the virtual environment using python 3.8
 ```
-pipenv sync
+virtualenv -p python3.8 venv
 ```
-To use IDLE with this project's virtual python environment (`virtualenv`), run:
+You may need to replace that with the absolute path to python3.8 if you don't have that in your PATH.
+
+To enter this project's virtual environment via the command line, enter:
+- on macOS/Linux: `source venv/bin/activate`
+- on Windows: `venv/Scripts/activate.bat`
+
+After entering the virtual environment, install the latest version of `pip`, and then `requirements.txt`:
 ```
-pipenv run python3 idle_launcher.py
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
-To enter this project's `virtualenv` via the command line, enter:
-```
-pipenv shell
-```
+To exit the virtual environment, run `deactivate`.
+
+## Usage
+
+You should use the following under your virtual environment if you installed it that way.
+
 To scrape meme images from reddit, use:
 ```
-pipenv run python3 reddit/scraper.py
+python reddit/scraper.py
 ```
 
 To use the repost checker and other related tools on the scraped contents, run:
 ```
-pipenv run python3 -i repost_tools.py
+python -i repost_tools.py
+```
+
+Useful scripts for repost generation and performance benchmarking:
+```
+python repost_generate.py
+python repost_generate_jsons.py
+python repost_benchmark.py
+python repost_benchmark_jsons.py
 ```
 
 ## Comments/Complaints
-"What is a meme" is a dumb pic and tesseract is dumb also
-
-My (WJ) code was broken so we thought tesseract was gud but actl it was as dumb as it was last time
+`pipenv` is broken so we're migrating to barebones `virtualenv` and `requirements.txt`

@@ -4,9 +4,11 @@
 *.pyc
 *.log
 *.swp
+venv/
 
 #cache
 scraper_cache/
+jsons/
 
 #old stuff (manually marked)
 *.old
