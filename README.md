@@ -11,12 +11,12 @@ You may need to replace that with the absolute path to python3.8 if you don't ha
 
 To enter this project's virtual environment via the command line, enter:
 - on macOS/Linux: `source venv/bin/activate`
-- on Windows: `venv/Scripts/activate.bat`
+- on Windows: `\path\to\venv\Scripts\activate.bat`
 
 After entering the virtual environment, install the latest version of `pip`, and then `requirements.txt`:
 ```
-pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
 To exit the virtual environment, run `deactivate`.

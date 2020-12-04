@@ -10,7 +10,7 @@ while True:
     if i == "":
         break
     with open(i) as f:
-        x = json.load(f)
+        x = json.load(f, encoding='utf8')
         if 'sample_count' not in d or x['sample_count'] == d['sample_count']:
             if not d:
                 d = x
