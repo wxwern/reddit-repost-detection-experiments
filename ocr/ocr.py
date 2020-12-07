@@ -11,7 +11,6 @@ class OCR:
 
     @staticmethod
     def read(meme, original: bool = False):
-        return ""
         '''Reads the image directly using pytesseract, unedited, and returns the text result.
 
         By default, returned string has no newlines and has one space between all words.
@@ -40,12 +39,10 @@ class OCR:
 
 
     def read2Normalized(meme):
-        return ""
         return OCR.read2(meme, normalized=True)
 
     @staticmethod
     def read2(meme, normalized=False):
-        return ""
         if isinstance(meme, str):
             meme = Image.open(meme)
         if normalized:
@@ -205,4 +202,3 @@ class OCR:
 
 if __name__ == "__main__":
     pass
-

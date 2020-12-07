@@ -200,7 +200,7 @@ class RepostChecker:
             if key == target_check:
                 continue
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
-            text_sim = 1
+            text_sim = 1.0 # 0.0 if text_sim_min <= 0.0 else Levenshtein.ratio(t[key], target_text)
             distances.append \
                     ( \
                      (key, \
