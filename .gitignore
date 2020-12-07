@@ -8,7 +8,7 @@ venv/
 
 #cache
 scraper_cache/
-jsons/
+jsons*/
 
 #old stuff (manually marked)
 *.old
