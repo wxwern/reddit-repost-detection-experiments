@@ -129,7 +129,7 @@ class Hasher:
         - hash2: second hash string to be compared.
         - hashType: the type of the hash, i.e. IMAGE or TEXT.
         """
-        x = diff(hash1, hash2, hashType)
+        x = Hasher.diff(hash1, hash2, hashType)
         if x:
             return 1-x
 
