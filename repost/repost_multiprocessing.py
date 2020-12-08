@@ -128,7 +128,6 @@ def findDetectionRate(imgs_list: list = None,
         print('failed to compute metrics due to division by zero')
 
     print('stats     : %s' % str(vC))
-    print('\a')
 
     return vC
 
@@ -178,22 +177,51 @@ def findDetectionRateForThresholdRange(seed:int=69,
                                                          seed=seed)
     args_list = []
     counter = 0
+    excluded_count = 0
+    results = []
+
+    try:
+        with open(str(save_to_file), "r") as f:
+            j = json.load(f)
+        if j["sample_count"] != sample_count:
+            print("failed to load: we have a conflicting benchmark file with a different sample count saved.")
+            return {}
+
+        print("*** found existing benchmark results file, will merge data")
+        results = j["data"]
+        pairs_alr_in_results = set(map(lambda x: (x["img_sim_min"], x["text_sim_min"]), results))
+    except:
+        img_sim_range = list(img_sim_range)
+        text_sim_range = list(text_sim_range)
+
     print('processing items with the following ranges')
-    img_sim_range = list(img_sim_range)
-    text_sim_range = list(text_sim_range)
     print('img_diffs: ' + str(img_sim_range))
     print('text_sims: ' + str(text_sim_range))
+    print()
     for i in list(img_sim_range):
         for t in list(text_sim_range):
+            if results:
+                pair = (i,t)
+                if pair in pairs_alr_in_results:
+                    excluded_count += 1
+                    continue
             counter += 1
             args_list.append((_poolRepostChecker, counter, names, i, t, verbose))
 
+    if len(args_list) == 0:
+        print("nothing to do!")
+        return {'sample_count': sample_count, 'data': results}
+
     print('elements to process per threshold: %d' % len(names))
-    print('threshold pairs to process       : %d' % len(args_list))
+    print('threshold pairs to process       : %d' % len(args_list), end='')
+    if excluded_count > 0:
+        print(' (excludes %d already processed pairs)' % excluded_count)
+    else:
+        print()
+
     print()
 
     pool = Pool(max(int(cpu_count()*cpu_threshold), 1))
-    results = []
     for i, e in enumerate(pool.imap_unordered(_helperFindDetectionRateFromThresholds, args_list), 1):
         print("[%6.2f%% complete]" % (i/len(args_list)*100))
         results.append(e)
@@ -211,5 +239,5 @@ def findDetectionRateForThresholdRange(seed:int=69,
         with open(str(save_to_file), 'w') as f:
             json.dump(output, f, indent=4)
 
-    print('done!\a')
+    print('done!')
     return output

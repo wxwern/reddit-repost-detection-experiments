@@ -20,7 +20,7 @@ if __name__ == "__main__":
     minv = float(input())
     print(' [maximum image sim, fraction] ', end='')
     maxv = float(input())
-    img_sim_values = list(filter(lambda x: minv <= x <= maxv, [x/40 for x in range(1, 40)]))
+    img_sim_values = list(filter(lambda x: minv <= x <= maxv, [x/40 for x in range(1, 40+1)]))
     print('> ', end='')
     print(img_sim_values)
     print()
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     minv = float(input())
     print(' [maximum text sim, fraction] ', end='')
     maxv = float(input())
-    text_sim_values = list(filter(lambda x: minv <= x <= maxv, [x/10 for x in range(0, 10)]))
+    text_sim_values = list(filter(lambda x: minv <= x <= maxv, [x/10 for x in range(0, 10+1)]))
     print('> ', end='')
     print(text_sim_values)
     print()
@@ -36,16 +36,12 @@ if __name__ == "__main__":
     cpu_limit = max(0.0,min(1.0, float(input())))
     print()
 
-    for file in files:
-        if not file.startswith('_'):
-            continue
-        if file == "__repost_check_data__.json":
-            print("warning: default repost json ignored")
-            continue
-        if ("graph" + file) in files:
-            print("warning: already processed repost json ignored")
-            continue
 
+    files = list(filter(lambda file: \
+                            file.startswith('_') and file.endswith('.json') and \
+                            file != "__repost_check_data__.json", files))
+
+    for i, file in enumerate(files):
         print("will be processing: " + file)
         save_loc = os.path.join(dir_name, "graph" + file)
         print("target save location: " + save_loc)
@@ -54,7 +50,7 @@ if __name__ == "__main__":
         print('starting in a few seconds... (ctrl-c to cancel)')
         try:
             import time
-            time.sleep(5)
+            time.sleep(3)
         except KeyboardInterrupt:
             import sys
             sys.exit()
@@ -64,7 +60,14 @@ if __name__ == "__main__":
                                                                    img_sim_range=img_sim_values,
                                                                    text_sim_range=text_sim_values,                                                                                       save_to_file=save_loc,
                                                                    cpu_threshold=cpu_limit)
-        print("done!")
+        print()
+        print(" _______________ ")
+        print("|               |")
+        print("| %3d/%-3d done! |" % (i+1, len(files)))
+        print("|_______________|")
+        print()
+
+    time.sleep(1)
     print("completed processing for all tasks!\a")
 
 
