@@ -1,35 +1,16 @@
 #!/usr/bin/env python3
 import json
+import copy
 from matplotlib import pyplot as plt
 
-print('input computed graph json file names (empty line to compare graphs):')
+print('input computed graph json file name to compare potential peak performance with ocr vs no-ocr:')
 ds = []
-labels = [] 
-while True:
-    d = {}
-    i = input()
-    if i == "":
-        break
-    with open(i, encoding='utf8') as f:
-        jd = json.load(f)
-        if 'sample_count' not in d or jd['sample_count'] == d['sample_count']:
-            if not d:
-                d = jd
-            else:
-                d['data'] += jd['data']
-        else:
-            print('error: sample count mismatch')
-            continue
-    labels.append(i)
-    ds.append(d)
 
-plt.xlabel('precision')
-plt.ylabel('recall')
-plt.grid()
-axes = plt.gca()
-axes.set_xlim([0.0,1.0])
-axes.set_ylim([0.0,1.0])
-ax = plt.subplot(111)
+while True:
+    i = input()
+    if i != "":
+        break
+
 
 def format_name(name):
     try:
@@ -40,6 +21,23 @@ def format_name(name):
         pass
     return name
 
+with open(i, encoding='utf8') as f:
+    jd1 = json.load(f)
+    jd2 = copy.deepcopy(jd1)
+    jd1["data"] = list(filter(lambda x: x["text_sim_min"] == 0.0, jd1["data"]))
+    ds = [jd1, jd2]
+labels = [format_name(i) + " (w/o ocr)", format_name(i) + " (w/ ocr)"]
+
+
+plt.xlabel('precision')
+plt.ylabel('recall')
+plt.grid()
+axes = plt.gca()
+axes.set_xlim([0.0,1.0])
+axes.set_ylim([0.0,1.0])
+ax = plt.subplot(111)
+
+
 
 for i, d in enumerate(ds):
     full_list = []
@@ -49,8 +47,17 @@ for i, d in enumerate(ds):
     img_range = list(set(map(lambda x: x['img_sim_min'], d['data'])))
     img_range.sort()
     for m in img_range:
-        points = list(map(lambda x: \
-                          (x['results']['precision'], x['results']['recall'], x['img_sim_min'], x['text_sim_min'], x['results']['f1_score']), \
+        def formatter(x):
+            try:
+                return (x['results']['precision'], \
+                        x['results']['recall'], \
+                        x['img_sim_min'], \
+                        x['text_sim_min'], \
+                        x['results']['f1_score'])
+            except KeyError:
+                return (0,0,x['img_sim_min'],x['text_sim_min'],0)
+
+        points = list(map(formatter, \
                           sorted(
                               list( \
                                    filter(lambda x: x['img_sim_min'] == m, d['data']) \
@@ -88,7 +95,7 @@ for i, d in enumerate(ds):
         _x = get_imgtxtsim_precrec(x)
         x_vals.append(_x[1][0])
         y_vals.append(_x[1][1])
-    ax.plot(x_vals, y_vals, label=format_name(labels[i]), marker='x', markeredgewidth=2, markersize=max(8-2*i,4))
+    ax.plot(x_vals, y_vals, label=(labels[i]), marker='x', markeredgewidth=2, markersize=max(8-2*i,4))
 
     full_list.sort(key=lambda x: (x[-1], x[0]), reverse=True)
     print()
