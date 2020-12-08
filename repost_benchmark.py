@@ -60,6 +60,8 @@ if __name__ == "__main__":
                                                                text_sim_range=text_sim_values,                                                                                         save_to_file=save_name,
                                                                cpu_threshold=cpu_limit)
 
+    print('done!\a')
+
 
 
 
