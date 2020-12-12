@@ -4,6 +4,7 @@ import os
 import sys
 import uuid
 import signal
+import random
 from multiprocessing import Pool, cpu_count
 from repost.repost_checker import RepostChecker
 from repost import repost_multiprocessing as poolRepostChecker
@@ -25,15 +26,15 @@ def initializer():
     """Ignore CTRL+C in the worker process."""
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-def getconfig(res=1.0, rot=0.0, asp=1.0, crop=(0,0,0,0)):
+def getconfig(res=1.0, rot=0.0, asp=1.0, crop=(0,0,0,0), seed=None):
     x = (res,rot,asp,crop)
     _id = ('%x' % abs(hash(x)))[:8]
-    return x + (_id,)
+    return x + (_id, seed)
 
 def _helper_generate_variant(x):
     return generate_variant(*x)
 
-def generate_variant(dirn,res,rot,asp,crop,uid, verbose=False):
+def generate_variant(dirn,res,rot,asp,crop,uid, seed=None, verbose=False):
     repostChecker = RepostChecker(dirn)
     repostChecker.verbose = verbose
     repostChecker.readProcessedDataFromCache()
@@ -46,6 +47,8 @@ def generate_variant(dirn,res,rot,asp,crop,uid, verbose=False):
     filename = "%s%s%s%s%s_%s.json" % (s_res, s_rot, s_asp, s_crop, s_idn, uid)
     print("  * " + filename + " --- generating reposts")
     repostChecker.setJsonCacheFilenmaeTarget(filename)
+    if seed:
+        random.random(seed)
     success = \
         repostChecker.generateRepostsForAll(count_per_post=1,
                                             res=res,
@@ -69,6 +72,11 @@ for asp in asps:
     variants.append(getconfig(asp=asp))
 for crop in crops:
     variants.append(getconfig(crop=crop))
+
+
+print("seed? ")
+input_seed = input()
+variants += [getconfig(res=None, rot=None, asp=None, crop=None, seed=input_seed)]
 
 if __name__ == "__main__":
     print("type directory name or path of scraper_cache:")

@@ -26,7 +26,7 @@ with open(i, encoding='utf8') as f:
     jd2 = copy.deepcopy(jd1)
     jd1["data"] = list(filter(lambda x: x["text_sim_min"] == 0.0, jd1["data"]))
     ds = [jd1, jd2]
-labels = [format_name(i) + " (w/o ocr)", format_name(i) + " (w/ ocr)"]
+labels = [format_name(i), format_name(i) + " + standardized OCR"]
 
 
 plt.xlabel('precision')
@@ -99,6 +99,7 @@ for i, d in enumerate(ds):
             label=labels[i], \
             marker=['x','+'][i%2], \
             markeredgewidth=2, \
+            linewidth=0, \
             markersize=max(8-2*(i//2),4))
 
     full_list.sort(key=lambda x: (x[-1], x[0]), reverse=True)

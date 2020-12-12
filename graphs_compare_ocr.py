@@ -9,11 +9,16 @@ print('all files will be generated in the same folder as the jsons folder.')
 print('graphs generated will compare potential peak performance with ocr vs no-ocr.')
 ds = []
 
-def format_name(name):
+def format_name(name, addinfo=None):
     try:
         x = name.split("_")
         if x[1].split("/")[1] == "graph" and x[3].endswith(".json") and len(x) == 4:
-            return x[1].split("/")[0] + "_" + x[2]
+            name = x[1].split("/")[0] + "_" + x[2]
+        x = name.split("_")
+        if addinfo:
+            x.insert(1, addinfo.strip())
+        x[-1] = "(" + x[-1] + ")"
+        name = " ".join(x)
     except:
         pass
     return name
@@ -33,7 +38,7 @@ for f in fls:
         jd2 = copy.deepcopy(jd1)
         jd1["data"] = list(filter(lambda x: x["text_sim_min"] == 0.0, jd1["data"]))
         ds = [jd1, jd2]
-    labels = [format_name(ipath) + " (w/o ocr)", format_name(ipath) + " (w/ ocr)"]
+    labels = [format_name(ipath), format_name(ipath, "+ standardized OCR")]
 
     fig = plt.figure()
     plt.xlabel('precision')
@@ -97,6 +102,7 @@ for f in fls:
         ax.plot(x_vals, y_vals, \
                 label=labels[i], \
                 marker=['x','+'][i%2], \
+                linewidth=0, \
                 markeredgewidth=2, \
                 markersize=max(8-2*(i//2),4))
 
