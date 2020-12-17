@@ -4,7 +4,7 @@ import random
 import os
 from PIL import Image
 
-def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=None, asp: float=None, crop: tuple=None, save_loc: str=None, skip_duplicates: bool =True):
+def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=None, asp: float=None, crop: tuple=None, save_loc: str=None, skip_duplicates: bool =True, seed=None):
     """
     Generates and returns a modified image based upon the input image, often seen as compression, cropping etc in reposts.
 
@@ -29,9 +29,11 @@ def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=
     if isinstance(img, str):
         img = Image.open(img)
 
+    if seed is not None:
+        random.seed(seed)
+
     lst_imgs = []
     while count >= 1:
-
         x,y = list(img.size)
         if res != 1.0:
             scale_factor = res if res else random.uniform(0.2, 1.0)
@@ -47,7 +49,6 @@ def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=
 
         new_size = (int(x), int(y))
 
-
         if crop is None:
             crop = (random.uniform(0.0,0.02),
                     random.uniform(0.0,0.02),
@@ -55,6 +56,8 @@ def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=
                     random.uniform(0.0,0.02))
 
         if rot != 0.0:
+            if seed is not None:
+                random.seed(seed)
             rotate_angle = rot if rot else random.uniform(-0.5,0.5)
             crop = list(crop)
             crop[0] += 0.03
@@ -69,8 +72,6 @@ def generate_bad_repost(img: Image, count: int=1, res: float = None, rot: float=
              new_size[1]*crop[1],
              new_size[0]*(1 - crop[2]),
              new_size[1]*(1 - crop[3]))
-
-
 
         #final computation
         new_img = img

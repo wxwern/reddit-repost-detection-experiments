@@ -291,13 +291,13 @@ class RepostChecker:
                 data.append(key)
         return data
 
-    def generateRepostsForAll(self, count_per_post=1, res=None, rot=None, asp=None, crop=None, uid=None):
+    def generateRepostsForAll(self, count_per_post=1, res=None, rot=None, asp=None, crop=None, uid=None, seed=None):
         '''generates reposts for every single non repost image in the image directory'''
         names = list(filter(lambda x: '_REPOST_' not in x, self.__imageToHash.keys()))
         self.vPrint('generating ' + str(len(names)) + ' reposts')
         interrupted = False
         try:
-            for i, name in enumerate(names):
+            for i, name in enumerate(sorted(names)):
                 repname = (str(uid) if uid else '') + '_REPOST_' + name
                 if count_per_post == 1:
                     if repname in self.__imageToHash and repname in self.__imageToText:
@@ -321,7 +321,8 @@ class RepostChecker:
                                                    rot=rot,
                                                    asp=asp,
                                                    crop=crop,
-                                                   save_loc=loc)
+                                                   save_loc=loc,
+                                                   seed=(seed+i))
                     if not isinstance(bad_imgs, list):
                         bad_imgs = [(repname, bad_imgs)]
 

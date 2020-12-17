@@ -52,16 +52,14 @@ def generate_variant(dirn,res,rot,asp,crop,uid, seed=None, verbose=False):
     print("  * " + filename + " --- generating reposts")
     repostChecker.setJsonCacheFilenmaeTarget(filename)
 
-    if seed is not None:
-        random.seed(seed)
-
     success = \
         repostChecker.generateRepostsForAll(count_per_post=1,
                                             res=res,
                                             rot=rot,
                                             asp=asp,
                                             crop=crop,
-                                            uid=uid)
+                                            uid=uid,
+                                            seed=seed)
     if success:
         print("    " + filename + " --- done!")
     else:
