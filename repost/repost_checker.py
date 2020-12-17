@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import Levenshtein
 import json
 import random
 from difflib import SequenceMatcher
@@ -133,7 +134,7 @@ class RepostChecker:
     def checkRepostDetection(self,
                              img: str,
                              img_sim_min: int = 0.8,
-                             text_sim_min: float = 0.7,
+                             text_sim_min: float = 0.0,
                              recheck_img: bool = True,
                              generate_repost: bool = False,
                              save_generated_repost: bool = True):
@@ -200,7 +201,7 @@ class RepostChecker:
             if key == target_check:
                 continue
             img_diff = Hasher.diff(value, target_hash, 'IMAGE')
-            text_sim = 1.0 # 0.0 if text_sim_min <= 0.0 else Levenshtein.ratio(t[key], target_text)
+            text_sim = 0.0 if text_sim_min <= 0.0 else Levenshtein.ratio(t[key], target_text)
             distances.append \
                     ( \
                      (key, \
@@ -409,8 +410,8 @@ class RepostChecker:
                           imgs_list: list = None,
                           sample_count: int = None,
                           seed: int = 69,
-                          img_sim_min: int = 15,
-                          text_sim_min: float = 0.7):
+                          img_sim_min: int = 0.8,
+                          text_sim_min: float = 0.0):
         '''finds the repost detection rate (precision, recall, true/false positives/negatives) given the parameters'''
 
         vC = {'TP':0,'FP':0,'TN':0,'FN':0,'??':0}
