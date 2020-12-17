@@ -5,10 +5,12 @@ import numpy as np
 
 print('input computed graph json file names (empty line to graph):')
 d = {}
+ipath = ""
 while True:
     i = input()
     if i == "":
         break
+    ipath = i
     with open(i, encoding='utf8') as f:
         x = json.load(f)
         if 'sample_count' not in d or x['sample_count'] == d['sample_count']:
@@ -20,7 +22,10 @@ while True:
             print('error: sample count mismatch')
 
 
+print("select graph mode: (0-3)")
+mode = int(input())
 
+fig = plt.figure()
 
 plt.xlabel('precision')
 plt.ylabel('recall')
@@ -36,18 +41,27 @@ print('extracting points..')
 img_range = list(set(map(lambda x: x['img_sim_min'], d['data'])))
 img_range.sort()
 for m in img_range:
-    points = list(map(lambda x: \
-                      (x['results']['precision'], x['results']['recall'], x['img_sim_min'], x['text_sim_min'], x['results']['f1_score']), \
+
+    def formatter(x):
+        try:
+            return (x['results']['precision'], \
+                    x['results']['recall'], \
+                    x['img_sim_min'], \
+                    x['text_sim_min'], \
+                    x['results']['f1_score'])
+        except KeyError:
+            return (0,0,x['img_sim_min'],x['text_sim_min'],0)
+
+    points = list(map(formatter, \
                       sorted(
                           list( \
-                              filter(lambda x: x['img_sim_min'] == m, d['data']) \
-                          ), \
+                               filter(lambda x: x['img_sim_min'] == m, d['data']) \
+                               ), \
                           key=lambda x: x['text_sim_min']
                       )
                       )
                   )
-    x = list(map(lambda p: p[0], points))
-    y = list(map(lambda p: p[1], points))
+
     full_list += points
 
 
@@ -61,9 +75,21 @@ def guaranteed_better_than(a,b):
 
 def compute_color(x):
     i_sim,t_sim = get_imgtxtsim_precrec(x)[0]
-    return np.array([max(min(1.0,(i_sim-0.6)*2.5),0.0)*0.75,
-                     0 if x not in filtered_list else 0.75,
-                     max(min(1.0,t_sim),0.0)*0.75, 1.0])
+    arr = [max(min(1.0,(i_sim-0.6)*2.5),0.0)*0.75,
+           0 if x not in filtered_list else 0.75,
+           max(min(1.0,t_sim),0.0)*0.75, 1.0]
+
+    if mode == 1:
+        arr[1] = 0
+        arr[2] = 0
+    if mode == 2:
+        arr[0] = 0
+        arr[1] = 0
+    if mode == 3:
+        arr[0] = 0
+        arr[2] = 0
+
+    return np.array(arr)
 
 print('computing outer points to highlight...')
 for x in full_list:
@@ -96,9 +122,7 @@ for x in full_list[0:5]:
     print("f1_score: %.4f" % x[4])
     print("---")
 
-plt.pause(5)
+ipath = ipath.replace('.json', '.png')
+print('\rsaving  %s... ' % ipath, end='')
+fig.savefig(ipath)
 plt.show()
-
-
-
-

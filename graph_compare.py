@@ -88,7 +88,7 @@ for i, d in enumerate(ds):
         _x = get_imgtxtsim_precrec(x)
         x_vals.append(_x[1][0])
         y_vals.append(_x[1][1])
-    ax.plot(x_vals, y_vals, label=format_name(labels[i]), marker='x', markeredgewidth=2, markersize=max(8-2*i,4))
+    ax.scatter(x_vals, y_vals, label=format_name(labels[i]), marker='x', markeredgewidth=2, markersize=max(8-2*i,4))
 
     full_list.sort(key=lambda x: (x[-1], x[0]), reverse=True)
     print()
