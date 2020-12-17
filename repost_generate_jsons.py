@@ -38,17 +38,23 @@ def generate_variant(dirn,res,rot,asp,crop,uid, seed=None, verbose=False):
     repostChecker = RepostChecker(dirn)
     repostChecker.verbose = verbose
     repostChecker.readProcessedDataFromCache()
-    s_res = ('_res%.1f' % res) if res != 1.0 else ''
-    s_rot = ('_rot%.1f' % rot) if rot != 0.0 else ''
-    s_asp = ('_asp%.1f' % asp) if asp != 1.0 else ''
-    s_crop = ('_crop(%.2f,%.2f,%.2f,%.2f)' % crop) if crop != (0,0,0,0) else ''
+    s_res = (('_res%.1f' % res) if res != 1.0 else '') if res is not None else '_resRNG'
+    s_rot = (('_rot%.1f' % rot) if rot != 0.0 else '') if rot is not None else '_rotRNG'
+    s_asp = (('_asp%.1f' % asp) if asp != 1.0 else '') if asp is not None else '_aspRNG'
+    s_crop = (('_crop(%.2f,%.2f,%.2f,%.2f)' % crop) if crop != (0,0,0,0) else '') if crop is not None else '_cropRNG'
     s_idn = '_idn' if s_res == s_rot == s_asp == s_crop == '' else ''
 
-    filename = "%s%s%s%s%s_%s.json" % (s_res, s_rot, s_asp, s_crop, s_idn, uid)
+    if res is None and rot is None and asp is None and crop is None:
+        filename = "_random_%s.json" % uid
+    else:
+        filename = "%s%s%s%s%s_%s.json" % (s_res, s_rot, s_asp, s_crop, s_idn, uid)
+
     print("  * " + filename + " --- generating reposts")
     repostChecker.setJsonCacheFilenmaeTarget(filename)
-    if seed:
-        random.random(seed)
+
+    if seed is not None:
+        random.seed(seed)
+
     success = \
         repostChecker.generateRepostsForAll(count_per_post=1,
                                             res=res,
@@ -74,11 +80,16 @@ for crop in crops:
     variants.append(getconfig(crop=crop))
 
 
-print("seed? ")
-input_seed = input()
-variants += [getconfig(res=None, rot=None, asp=None, crop=None, seed=input_seed)]
 
 if __name__ == "__main__":
+    try:
+        print("seed for random generation? (type nothing to skip)")
+        input_seed = int(input())
+        variants.append(getconfig(res=None, rot=None, asp=None, crop=None, seed=input_seed))
+    except:
+        print("(skipped random generation)")
+        pass
+
     print("type directory name or path of scraper_cache:")
     dirn = input()
     print("would you like to update the current cache list?")
@@ -125,8 +136,8 @@ if __name__ == "__main__":
         print('executing using 1 thread')
         results = []
         try:
-            for res,rot,asp,crop,uid in variants:
-                v = generate_variant(dirn, res, rot, asp, crop, uid, verbose=True)
+            for res,rot,asp,crop,uid,seed in variants:
+                v = generate_variant(dirn, res, rot, asp, crop, uid, seed, verbose=True)
                 if not v:
                     raise KeyboardInterrupt()
                 else:
