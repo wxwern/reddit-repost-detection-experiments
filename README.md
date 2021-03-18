@@ -1,6 +1,4 @@
-# arp-thingy
-# :D
-
+# Reddit Repost Detection Experiments
 
 ## Installation and usage
 Set up the virtual environment using python 3.8
@@ -43,5 +41,3 @@ python repost_benchmark.py
 python repost_benchmark_jsons.py
 ```
 
-## Comments/Complaints
-`pipenv` is broken so we're migrating to barebones `virtualenv` and `requirements.txt`
