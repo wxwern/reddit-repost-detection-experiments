@@ -75,7 +75,7 @@ for i, d in enumerate(ds):
     def guaranteed_better_than(a,b):
         a = get_imgtxtsim_precrec(a)
         b = get_imgtxtsim_precrec(b)
-        return a[1][0] > b[1][0] and a[1][1] > b[1][1]
+        return (a[1][0] >= b[1][0] and a[1][1] >= b[1][1]) and a[1] != b[1]
 
     print('computing outer points to highlight...')
     for x in full_list:

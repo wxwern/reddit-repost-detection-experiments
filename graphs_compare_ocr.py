@@ -38,7 +38,7 @@ for f in fls:
         jd2 = copy.deepcopy(jd1)
         jd1["data"] = list(filter(lambda x: x["text_sim_min"] == 0.0, jd1["data"]))
         ds = [jd1, jd2]
-    labels = [format_name(ipath), format_name(ipath, "+ standardized OCR")]
+    labels = [format_name(ipath), format_name(ipath, "+ sOCR")]
 
     fig = plt.figure()
     plt.xlabel('precision')
@@ -84,7 +84,7 @@ for f in fls:
         def guaranteed_better_than(a,b):
             a = get_imgtxtsim_precrec(a)
             b = get_imgtxtsim_precrec(b)
-            return a[1][0] > b[1][0] and a[1][1] > b[1][1]
+            return (a[1][0] >= b[1][0] and a[1][1] >= b[1][1]) and a[1] != b[1]
 
         for x in full_list:
             if len(list(filter(lambda y: guaranteed_better_than(y,x), full_list))) == 0:
@@ -99,10 +99,12 @@ for f in fls:
             _x = get_imgtxtsim_precrec(x)
             x_vals.append(_x[1][0])
             y_vals.append(_x[1][1])
+        colorcycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
         ax.plot(x_vals, y_vals, \
                 label=labels[i], \
-                marker=['x','+'][i%2], \
+                marker=['x','o'][i%2], \
                 linewidth=0, \
+                markerfacecolor='none', markeredgecolor=colorcycle[i%len(colorcycle)],
                 markeredgewidth=2, \
                 markersize=max(8-2*(i//2),4))
 

@@ -18,6 +18,7 @@ jsons*/
 /*.png
 /*.jpg
 /*.json
+*.zip
 
 #system thumbnails
 .DS_Store
